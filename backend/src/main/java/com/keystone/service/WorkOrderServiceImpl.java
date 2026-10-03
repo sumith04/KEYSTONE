@@ -18,7 +18,9 @@ import com.keystone.exception.ApiException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.TimeLogRepository;
 import com.keystone.repository.UserRepository;
+import com.keystone.repository.WorkOrderPartRepository;
 import com.keystone.repository.WorkOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -66,6 +68,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
+    private final WorkOrderPartRepository workOrderPartRepository;
+    private final TimeLogRepository timeLogRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -290,6 +294,18 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         if (NON_DELETABLE_STATUSES.contains(workOrder.getStatus())) {
             throw new ApiException(
                     "Completed or closed work orders cannot be deleted.",
+                    HttpStatus.CONFLICT
+            );
+        }
+        if (workOrderPartRepository.existsByWorkOrderId(id)) {
+            throw new ApiException(
+                    "Cannot delete work order because parts have been used on it.",
+                    HttpStatus.CONFLICT
+            );
+        }
+        if (timeLogRepository.existsByWorkOrderId(id)) {
+            throw new ApiException(
+                    "Cannot delete work order because time logs exist for it.",
                     HttpStatus.CONFLICT
             );
         }

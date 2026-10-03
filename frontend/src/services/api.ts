@@ -4,7 +4,10 @@ import {
   AuthResponse,
   AuthUser,
   CreateCustomerRequest,
+  CreatePartRequest,
   CreateSiteRequest,
+  CreateTimeLogRequest,
+  CreateWorkOrderPartRequest,
   CreateWorkOrderRequest,
   Customer,
   CustomerPageResponse,
@@ -12,15 +15,23 @@ import {
   ListQueryParams,
   LoginRequest,
   MessageResponse,
+  Part,
+  PartListQueryParams,
+  PartPageResponse,
   Site,
   SitePageResponse,
   SiteStatus,
+  TimeLog,
   UpdateCustomerRequest,
+  UpdatePartRequest,
   UpdateSiteRequest,
+  UpdateTimeLogRequest,
+  UpdateWorkOrderPartRequest,
   UpdateWorkOrderRequest,
   WorkOrder,
   WorkOrderListQueryParams,
   WorkOrderPageResponse,
+  WorkOrderPart,
   WorkOrderSummary,
 } from '../types';
 
@@ -111,7 +122,7 @@ export const fetchCurrentUser = async (): Promise<AuthUser> => {
   return response.data;
 };
 
-const toListParams = (params: ListQueryParams | WorkOrderListQueryParams = {}) => {
+const toListParams = (params: ListQueryParams | WorkOrderListQueryParams | PartListQueryParams = {}) => {
   const query: Record<string, string | number> = {
     page: params.page ?? 0,
     size: params.size ?? 10,
@@ -137,6 +148,11 @@ const toListParams = (params: ListQueryParams | WorkOrderListQueryParams = {}) =
   }
   if (workOrderParams.technicianId != null) {
     query.technicianId = workOrderParams.technicianId;
+  }
+
+  const partParams = params as PartListQueryParams;
+  if (partParams.category && partParams.category.trim()) {
+    query.category = partParams.category.trim();
   }
 
   return query;
@@ -272,4 +288,85 @@ export const cancelWorkOrder = async (id: number): Promise<WorkOrder> => {
 export const getAssignableTechnicians = async (): Promise<AuthUser[]> => {
   const response = await apiClient.get<AuthUser[]>('/work-orders/technicians');
   return response.data;
+};
+
+export const getParts = async (params: PartListQueryParams = {}): Promise<PartPageResponse> => {
+  const response = await apiClient.get<PartPageResponse>('/parts', {
+    params: toListParams({
+      ...params,
+      sort: params.sort ?? 'name,asc',
+    }),
+  });
+  return response.data;
+};
+
+export const getPart = async (id: number): Promise<Part> => {
+  const response = await apiClient.get<Part>(`/parts/${id}`);
+  return response.data;
+};
+
+export const createPart = async (payload: CreatePartRequest): Promise<Part> => {
+  const response = await apiClient.post<Part>('/parts', payload);
+  return response.data;
+};
+
+export const updatePart = async (id: number, payload: UpdatePartRequest): Promise<Part> => {
+  const response = await apiClient.put<Part>(`/parts/${id}`, payload);
+  return response.data;
+};
+
+export const deletePart = async (id: number): Promise<void> => {
+  await apiClient.delete(`/parts/${id}`);
+};
+
+export const getWorkOrderParts = async (workOrderId: number): Promise<WorkOrderPart[]> => {
+  const response = await apiClient.get<WorkOrderPart[]>(`/work-orders/${workOrderId}/parts`);
+  return response.data;
+};
+
+export const addWorkOrderPart = async (
+  workOrderId: number,
+  payload: CreateWorkOrderPartRequest
+): Promise<WorkOrderPart> => {
+  const response = await apiClient.post<WorkOrderPart>(`/work-orders/${workOrderId}/parts`, payload);
+  return response.data;
+};
+
+export const updateWorkOrderPart = async (
+  workOrderId: number,
+  workOrderPartId: number,
+  payload: UpdateWorkOrderPartRequest
+): Promise<WorkOrderPart> => {
+  const response = await apiClient.put<WorkOrderPart>(
+    `/work-orders/${workOrderId}/parts/${workOrderPartId}`,
+    payload
+  );
+  return response.data;
+};
+
+export const deleteWorkOrderPart = async (workOrderId: number, workOrderPartId: number): Promise<void> => {
+  await apiClient.delete(`/work-orders/${workOrderId}/parts/${workOrderPartId}`);
+};
+
+export const getTimeLogs = async (workOrderId: number): Promise<TimeLog[]> => {
+  const response = await apiClient.get<TimeLog[]>(`/work-orders/${workOrderId}/time-logs`);
+  return response.data;
+};
+
+export const addTimeLog = async (workOrderId: number, payload: CreateTimeLogRequest): Promise<TimeLog> => {
+  const response = await apiClient.post<TimeLog>(`/work-orders/${workOrderId}/time-logs`, payload);
+  return response.data;
+};
+
+export const updateTimeLog = async (
+  workOrderId: number,
+  timeLogId: number,
+  payload: UpdateTimeLogRequest
+): Promise<TimeLog> => {
+  const response = await apiClient.put<TimeLog>(`/work-orders/${workOrderId}/time-logs/${timeLogId}`, payload);
+  return response.data;
+};
+
+export const deleteTimeLog = async (workOrderId: number, timeLogId: number): Promise<void> => {
+  await apiClient.delete(`/work-orders/${workOrderId}/time-logs/${timeLogId}`);
 };

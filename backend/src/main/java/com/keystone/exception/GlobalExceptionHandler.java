@@ -161,6 +161,9 @@ public class GlobalExceptionHandler {
         if (details.contains("uk_work_orders_number") || details.contains("work_order_number")) {
             return "A work order with this number already exists.";
         }
+        if (details.contains("uk_parts_part_number") || details.contains("part_number")) {
+            return "A part with this part number already exists.";
+        }
         return "A resource with the same unique value already exists.";
     }
 }

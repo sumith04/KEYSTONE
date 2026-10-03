@@ -246,3 +246,92 @@ export interface MessageResponse {
   message: string;
   timestamp?: string;
 }
+
+export type PartStatus = 'ACTIVE' | 'INACTIVE';
+
+export interface Part {
+  id: number;
+  partNumber: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  unitOfMeasure: string | null;
+  unitCost: number | string;
+  quantityInStock: number;
+  reorderLevel: number;
+  status: PartStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PartPageResponse {
+  content: Part[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface CreatePartRequest {
+  partNumber: string;
+  name: string;
+  description?: string;
+  category?: string;
+  unitOfMeasure?: string;
+  unitCost: number;
+  quantityInStock: number;
+  reorderLevel: number;
+  status?: PartStatus;
+}
+
+export interface UpdatePartRequest extends CreatePartRequest {
+  status: PartStatus;
+}
+
+export interface PartListQueryParams extends ListQueryParams {
+  category?: string;
+}
+
+export interface WorkOrderPart {
+  id: number;
+  workOrderId: number;
+  partId: number;
+  partNumber: string;
+  partName: string;
+  quantityUsed: number;
+  unitCostAtUsage: number | string;
+  totalCost: number | string;
+  usedById: number | null;
+  usedByName: string | null;
+  usedAt: string;
+}
+
+export interface CreateWorkOrderPartRequest {
+  partId: number;
+  quantity: number;
+}
+
+export interface UpdateWorkOrderPartRequest {
+  quantity: number;
+}
+
+export interface TimeLog {
+  id: number;
+  workOrderId: number;
+  technicianId: number;
+  technicianName: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTimeLogRequest {
+  startTime: string;
+  endTime: string;
+  notes?: string;
+}
+
+export interface UpdateTimeLogRequest extends CreateTimeLogRequest {}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Building2, ClipboardList, Home, LogOut, Menu, Shield, Users, Wrench, X } from 'lucide-react';
+import { Building2, ClipboardList, Home, LogOut, Menu, Package, Shield, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -22,6 +22,7 @@ export const MainLayout: React.FC = () => {
   const isTechnician = role === 'TECHNICIAN';
   const showWorkOrders = hasPermission('VIEW_WORK_ORDER') && !isTechnician;
   const showTechnicianWorkspace = hasPermission('VIEW_WORK_ORDER') && isTechnician;
+  const showParts = hasPermission('VIEW_PART');
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
 
   const handleLogout = async () => {
@@ -89,6 +90,14 @@ export const MainLayout: React.FC = () => {
                   </span>
                 </NavLink>
               )}
+              {showParts && (
+                <NavLink to="/parts" className={navLinkClass}>
+                  <span className="inline-flex items-center space-x-2">
+                    <Package className="w-4 h-4" />
+                    <span>Parts</span>
+                  </span>
+                </NavLink>
+              )}
             </nav>
           </div>
 
@@ -140,6 +149,11 @@ export const MainLayout: React.FC = () => {
             {showTechnicianWorkspace && (
               <NavLink to="/technician" className={navLinkClass} onClick={() => setMobileOpen(false)}>
                 Technician Workspace
+              </NavLink>
+            )}
+            {showParts && (
+              <NavLink to="/parts" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+                Parts
               </NavLink>
             )}
             <div className="pt-2 border-t border-slate-800">
