@@ -36,6 +36,14 @@ class RolePermissionMapperTest {
         assertFalse(managerPermissions.contains(Permission.DELETE_USER)); // Must NOT have DELETE_USER
         assertTrue(managerPermissions.contains(Permission.VIEW_DASHBOARD));
         assertTrue(managerPermissions.contains(Permission.VIEW_REPORT));
+        assertTrue(managerPermissions.contains(Permission.CREATE_CUSTOMER));
+        assertTrue(managerPermissions.contains(Permission.UPDATE_CUSTOMER));
+        assertTrue(managerPermissions.contains(Permission.VIEW_CUSTOMER));
+        assertTrue(managerPermissions.contains(Permission.DELETE_CUSTOMER));
+        assertTrue(managerPermissions.contains(Permission.CREATE_SITE));
+        assertTrue(managerPermissions.contains(Permission.UPDATE_SITE));
+        assertTrue(managerPermissions.contains(Permission.VIEW_SITE));
+        assertTrue(managerPermissions.contains(Permission.DELETE_SITE));
     }
 
     @Test
@@ -48,6 +56,12 @@ class RolePermissionMapperTest {
         assertFalse(dispatcherPermissions.contains(Permission.CREATE_USER));
         assertFalse(dispatcherPermissions.contains(Permission.UPDATE_USER));
         assertFalse(dispatcherPermissions.contains(Permission.DELETE_USER));
+        assertFalse(dispatcherPermissions.contains(Permission.CREATE_CUSTOMER));
+        assertFalse(dispatcherPermissions.contains(Permission.UPDATE_CUSTOMER));
+        assertFalse(dispatcherPermissions.contains(Permission.DELETE_CUSTOMER));
+        assertFalse(dispatcherPermissions.contains(Permission.CREATE_SITE));
+        assertFalse(dispatcherPermissions.contains(Permission.UPDATE_SITE));
+        assertFalse(dispatcherPermissions.contains(Permission.DELETE_SITE));
     }
 
     @Test
@@ -60,6 +74,11 @@ class RolePermissionMapperTest {
         assertFalse(techPermissions.contains(Permission.CREATE_USER));
         assertFalse(techPermissions.contains(Permission.UPDATE_USER));
         assertFalse(techPermissions.contains(Permission.DELETE_USER));
+        assertTrue(techPermissions.contains(Permission.VIEW_SITE));
+        assertFalse(techPermissions.contains(Permission.VIEW_CUSTOMER));
+        assertFalse(techPermissions.contains(Permission.CREATE_SITE));
+        assertFalse(techPermissions.contains(Permission.UPDATE_SITE));
+        assertFalse(techPermissions.contains(Permission.DELETE_SITE));
     }
 
     @Test
@@ -70,5 +89,13 @@ class RolePermissionMapperTest {
         assertEquals(4, customerPermissions.size()); // LOGIN, LOGOUT, REQUEST_RAISE, VIEW_OWN_REQUEST
         assertFalse(customerPermissions.contains(Permission.VIEW_USER));
         assertFalse(customerPermissions.contains(Permission.CREATE_USER));
+        assertFalse(customerPermissions.contains(Permission.VIEW_CUSTOMER));
+        assertFalse(customerPermissions.contains(Permission.CREATE_CUSTOMER));
+        assertFalse(customerPermissions.contains(Permission.UPDATE_CUSTOMER));
+        assertFalse(customerPermissions.contains(Permission.DELETE_CUSTOMER));
+        assertFalse(customerPermissions.contains(Permission.VIEW_SITE));
+        assertFalse(customerPermissions.contains(Permission.CREATE_SITE));
+        assertFalse(customerPermissions.contains(Permission.UPDATE_SITE));
+        assertFalse(customerPermissions.contains(Permission.DELETE_SITE));
     }
 }

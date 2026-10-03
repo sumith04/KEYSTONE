@@ -7,7 +7,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "customers")
+@Table(
+        name = "customers",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_customers_customer_code", columnNames = "customer_code"),
+                @UniqueConstraint(name = "uk_customers_email", columnNames = "email")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,7 +37,7 @@ public class Customer {
     @Column(name = "contact_last_name")
     private String contactLastName;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(name = "phone")

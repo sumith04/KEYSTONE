@@ -7,6 +7,7 @@ import com.keystone.config.TokenBlacklistService;
 import com.keystone.dto.*;
 import com.keystone.enums.Role;
 import com.keystone.service.AuthService;
+import com.keystone.service.AuthorizationService;
 import com.keystone.config.CustomUserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private AuthorizationService authorizationService;
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
