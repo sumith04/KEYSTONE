@@ -409,3 +409,157 @@ export interface CreateTimeLogRequest {
 }
 
 export interface UpdateTimeLogRequest extends CreateTimeLogRequest {}
+
+export interface DateRangeQuery {
+  from?: string;
+  to?: string;
+}
+
+export interface StatusCount {
+  status: WorkOrderStatus;
+  count: number;
+}
+
+export interface PriorityCount {
+  priority: WorkOrderPriority;
+  count: number;
+}
+
+export interface TechnicianWorkload {
+  technicianId: number;
+  technicianName: string;
+  assignedWorkOrders: number;
+  inProgressWorkOrders: number;
+  completedWorkOrders: number;
+  overdueSlaWorkOrders: number;
+}
+
+export interface SlaDashboard {
+  onTrack: number;
+  atRisk: number;
+  breached: number;
+  resolved: number;
+  slaCompliancePercentage: number | null;
+}
+
+export interface InventoryDashboard {
+  totalParts: number;
+  activeParts: number;
+  lowStockParts: number;
+  outOfStockParts: number;
+}
+
+export interface TimeDashboard {
+  totalLoggedMinutes: number;
+  totalLoggedHours: number;
+  activeTechniciansWithTimeLogs: number;
+}
+
+export interface DashboardSummary {
+  totalWorkOrders: number;
+  newWorkOrders: number;
+  assignedWorkOrders: number;
+  inProgressWorkOrders: number;
+  onHoldWorkOrders: number;
+  completedWorkOrders: number;
+  closedWorkOrders: number;
+  cancelledWorkOrders: number;
+  openWorkOrders: number;
+  slaBreachedWorkOrders: number;
+  slaAtRiskWorkOrders: number;
+  activeTechnicians: number;
+  lowStockParts: number;
+  totalParts: number;
+  statusDistribution: StatusCount[];
+  priorityDistribution: PriorityCount[];
+  technicianWorkload: TechnicianWorkload[];
+  sla: SlaDashboard;
+  inventory: InventoryDashboard;
+  time: TimeDashboard;
+}
+
+export interface RecentWorkOrder {
+  id: number;
+  workOrderNumber: string;
+  title: string;
+  status: WorkOrderStatus;
+  priority: WorkOrderPriority;
+  customer: string | null;
+  site: string | null;
+  technician: string | null;
+  createdAt: string;
+  slaStatus: SlaStatus;
+}
+
+export type TrendInterval = 'DAY' | 'WEEK' | 'MONTH';
+
+export interface WorkOrderTrend {
+  period: string;
+  created: number;
+  completed: number;
+  closed: number;
+}
+
+export interface WorkOrderReport {
+  total: number;
+  created: number;
+  completed: number;
+  closed: number;
+  cancelled: number;
+  averageCompletionMinutes: number | null;
+  statusDistribution: StatusCount[];
+  priorityDistribution: PriorityCount[];
+}
+
+export interface SlaReport {
+  totalWorkOrdersWithSla: number;
+  resolvedWithinSla: number;
+  breached: number;
+  atRisk: number;
+  onTrack: number;
+  resolved: number;
+  slaCompliancePercentage: number | null;
+  responseSlaBreaches: number;
+  resolutionSlaBreaches: number;
+}
+
+export interface TechnicianPerformance {
+  technicianId: number;
+  technicianName: string;
+  assignedCount: number;
+  completedCount: number;
+  closedCount: number;
+  completedWithinSla: number;
+  slaBreaches: number;
+  totalLoggedMinutes: number;
+}
+
+export interface InventoryReport {
+  totalParts: number;
+  activeParts: number;
+  inactiveParts: number;
+  lowStock: number;
+  outOfStock: number;
+  totalInventoryValue: number | string;
+}
+
+export interface TechnicianTimeTotal {
+  technicianId: number;
+  technicianName: string;
+  totalLoggedMinutes: number;
+}
+
+export interface WorkOrderTimeTotal {
+  workOrderId: number;
+  workOrderNumber: string;
+  title: string;
+  totalLoggedMinutes: number;
+}
+
+export interface TimeReport {
+  totalLoggedMinutes: number;
+  totalLoggedHours: number;
+  logsCount: number;
+  minutesByTechnician: TechnicianTimeTotal[];
+  minutesByWorkOrder: WorkOrderTimeTotal[];
+}

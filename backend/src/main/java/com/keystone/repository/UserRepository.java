@@ -21,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRoleAndEnabledOrderByFirstNameAscLastNameAsc(Role role, boolean enabled);
 
+    long countByRoleAndEnabled(Role role, boolean enabled);
+
     @Query("SELECT u FROM User u WHERE " +
            "(:search IS NULL OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +

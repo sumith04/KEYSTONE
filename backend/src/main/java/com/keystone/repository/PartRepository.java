@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Repository
@@ -38,4 +39,15 @@ public interface PartRepository extends JpaRepository<Part, Long> {
             @Param("status") PartStatus status,
             Pageable pageable
     );
+
+    long countByStatus(PartStatus status);
+
+    @Query("SELECT COUNT(p) FROM Part p WHERE p.quantityInStock <= p.reorderLevel")
+    long countLowStock();
+
+    @Query("SELECT COUNT(p) FROM Part p WHERE p.quantityInStock = 0")
+    long countOutOfStock();
+
+    @Query("SELECT COALESCE(SUM(p.quantityInStock * p.unitCost), 0) FROM Part p")
+    BigDecimal sumInventoryValue();
 }

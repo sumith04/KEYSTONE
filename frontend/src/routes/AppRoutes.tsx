@@ -19,6 +19,8 @@ import { SlaPolicyEditPage } from '../pages/sla/SlaPolicyEditPage';
 import { PartCreatePage } from '../pages/parts/PartCreatePage';
 import { PartEditPage } from '../pages/parts/PartEditPage';
 import { PartsPage } from '../pages/parts/PartsPage';
+import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { ReportsPage } from '../pages/reports/ReportsPage';
 import { TechnicianWorkspacePage } from '../pages/technician/TechnicianWorkspacePage';
 import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
 import { WorkOrderDetailsPage } from '../pages/work-orders/WorkOrderDetailsPage';
@@ -35,6 +37,13 @@ export const AppRoutes: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
+
+          <Route element={<PermissionRoute requiredPermission="VIEW_DASHBOARD" />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="VIEW_REPORT" />}>
+            <Route path="reports" element={<ReportsPage />} />
+          </Route>
 
           <Route element={<PermissionRoute requiredPermission="CREATE_CUSTOMER" />}>
             <Route path="customers/new" element={<CustomerCreatePage />} />
