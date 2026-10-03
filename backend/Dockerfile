@@ -6,7 +6,9 @@ COPY pom.xml .
 COPY src ./src
 
 RUN mvn -B -DskipTests package \
-    && cp "$(ls target/keystone-backend-*.jar | grep -vE 'plain|original')" /app/application.jar
+    && JAR="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' ! -name '*-original.jar' | sort | head -n 1)" \
+    && test -n "$JAR" \
+    && cp "$JAR" /app/application.jar
 
 # Stage 2: run the generated JAR
 FROM eclipse-temurin:21-jre-alpine
