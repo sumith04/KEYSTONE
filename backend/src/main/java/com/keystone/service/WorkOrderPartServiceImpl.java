@@ -29,6 +29,7 @@ public class WorkOrderPartServiceImpl implements WorkOrderPartService {
     private final WorkOrderPartRepository workOrderPartRepository;
     private final PartRepository partRepository;
     private final WorkOrderAccessGuard workOrderAccessGuard;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -151,6 +152,11 @@ public class WorkOrderPartServiceImpl implements WorkOrderPartService {
         }
         part.setQuantityInStock(remaining);
         partRepository.save(part);
+        try {
+            notificationService.notifyLowStockIfNeeded(part);
+        } catch (Exception ignored) {
+            // Low-stock alerts must not block parts usage.
+        }
     }
 
     private void restoreStock(Part part, int quantity) {

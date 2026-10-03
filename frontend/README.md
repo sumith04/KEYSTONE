@@ -64,3 +64,11 @@ The Vite dev server will start at `http://localhost:5173`.
 npm run build
 ```
 The compiled static assets will be output to the `dist/` directory.
+
+---
+
+## Notifications
+
+Authenticated users see a header bell (unread badge + recent dropdown) and a `/notifications` page. Both use `/api/notifications` through the shared Axios client. Recipient IDs are never sent from the browser.
+
+`NotificationContext.applyIncomingNotification` is the hook Prompt 12 can use for WebSocket updates. This build does not poll and does not open a socket.

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { BarChart3, Building2, ClipboardList, Home, LayoutDashboard, LogOut, Menu, Package, Shield, Timer, Users, Wrench, X } from 'lucide-react';
+import { NotificationBell } from '../components/NotificationBell';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -129,6 +130,7 @@ export const MainLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <NotificationBell />
             <div className="hidden sm:block text-right">
               <p className="text-xs font-medium text-slate-200">{displayName || user?.userEmail}</p>
               {role && <p className="text-[11px] uppercase tracking-wide text-slate-500">{role}</p>}

@@ -1,0 +1,14 @@
+package com.keystone.enums;
+
+public enum NotificationType {
+    WORK_ORDER_ASSIGNED,
+    WORK_ORDER_STATUS_CHANGED,
+    WORK_ORDER_COMPLETED,
+    WORK_ORDER_CLOSED,
+    WORK_ORDER_CANCELLED,
+    SLA_AT_RISK,
+    SLA_BREACHED,
+    SERVICE_REQUEST,
+    PART_LOW_STOCK,
+    GENERAL
+}

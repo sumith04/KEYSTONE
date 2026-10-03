@@ -66,6 +66,9 @@ class WorkOrderServiceTest {
     @Mock
     private SlaService slaService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;
 
@@ -323,6 +326,20 @@ class WorkOrderServiceTest {
         assertEquals(technician, workOrder.getAssignedTechnician());
         assertEquals("Terry Tech", response.getAssignedTechnicianName());
         verify(slaService).recordResponseIfNeeded(eq(workOrder), any());
+        verify(notificationService).notifyWorkOrderAssigned(eq(technician), any(WorkOrder.class));
+    }
+
+    @Test
+    void assignWorkOrder_WhenSameTechnicianAlreadyAssigned_ShouldNotNotifyAgain() {
+        workOrder.setStatus(WorkOrderStatus.ASSIGNED);
+        workOrder.setAssignedTechnician(technician);
+        when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
+        when(userRepository.findById(200L)).thenReturn(Optional.of(technician));
+        when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(200L).build(), DISPATCHER_EMAIL);
+
+        verify(notificationService, never()).notifyWorkOrderAssigned(any(), any());
     }
 
     @Test
@@ -346,6 +363,7 @@ class WorkOrderServiceTest {
 
         assertEquals(WorkOrderStatus.ASSIGNED, response.getStatus());
         assertEquals(203L, response.getAssignedTechnicianId());
+        verify(notificationService).notifyWorkOrderAssigned(eq(otherTech), any(WorkOrder.class));
     }
 
     @Test
@@ -401,6 +419,7 @@ class WorkOrderServiceTest {
 
         assertEquals(WorkOrderStatus.IN_PROGRESS, response.getStatus());
         assertNotNull(workOrder.getActualStart());
+        verify(notificationService).notifyWorkOrderStatusChanged(any(WorkOrder.class), eq(WorkOrderStatus.IN_PROGRESS));
     }
 
     @Test
@@ -430,6 +449,10 @@ class WorkOrderServiceTest {
         assertNotNull(workOrder.getActualEnd());
         verify(slaService).recordResolutionIfNeeded(eq(workOrder), any());
         assertEquals(WorkOrderStatus.CLOSED, workOrderService.closeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
+        verify(notificationService).notifyWorkOrderStatusChanged(any(WorkOrder.class), eq(WorkOrderStatus.ON_HOLD));
+        verify(notificationService).notifyWorkOrderStatusChanged(any(WorkOrder.class), eq(WorkOrderStatus.IN_PROGRESS));
+        verify(notificationService).notifyWorkOrderStatusChanged(any(WorkOrder.class), eq(WorkOrderStatus.COMPLETED));
+        verify(notificationService).notifyWorkOrderStatusChanged(any(WorkOrder.class), eq(WorkOrderStatus.CLOSED));
     }
 
     @Test
@@ -440,6 +463,7 @@ class WorkOrderServiceTest {
         ApiException exception = assertThrows(ApiException.class, () -> workOrderService.completeWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         assertTrue(exception.getMessage().contains("ASSIGNED to COMPLETED"));
+        verify(notificationService, never()).notifyWorkOrderStatusChanged(any(), any());
     }
 
     @Test
