@@ -21,7 +21,7 @@ const badgeClass = (extra: string) =>
   `inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${extra}`;
 
 export const ServiceRequestStatusBadge: React.FC<{ status: ServiceRequestStatus }> = ({ status }) => (
-  <span className={badgeClass(statusStyles[status])}>{status.replaceAll('_', ' ')}</span>
+  <span className={badgeClass(statusStyles[status])}>{status.replace(/_/g, ' ')}</span>
 );
 
 export const ServiceRequestPriorityBadge: React.FC<{ priority: WorkOrderPriority }> = ({ priority }) => (

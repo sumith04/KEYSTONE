@@ -74,7 +74,15 @@ export const CustomerRequestEditPage: React.FC = () => {
       </div>
       {error && <AlertBanner tone="error" message={error} details={validationErrors} />}
       <CustomerRequestForm
-        initialValues={request}
+        initialValues={{
+          siteId: request.siteId,
+          title: request.title,
+          description: request.description,
+          priority: request.priority,
+          preferredDate: request.preferredDate,
+          contactName: request.contactName ?? undefined,
+          contactPhone: request.contactPhone ?? undefined,
+        }}
         sites={sites}
         submitLabel="Save changes"
         submitting={submitting}
