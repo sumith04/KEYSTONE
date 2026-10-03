@@ -1,11 +1,15 @@
 import axios from 'axios';
 import {
+  AuthResponse,
+  AuthUser,
   CreateCustomerRequest,
   CreateSiteRequest,
   Customer,
   CustomerPageResponse,
   CustomerStatus,
   ListQueryParams,
+  LoginRequest,
+  MessageResponse,
   Site,
   SitePageResponse,
   SiteStatus,
@@ -14,6 +18,22 @@ import {
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+export const AUTH_TOKEN_KEY = 'keystone_token';
+export const AUTH_USER_KEY = 'keystone_user';
+export const AUTH_UNAUTHORIZED_EVENT = 'keystone:unauthorized';
+
+const isPublicAuthRequest = (url?: string) => {
+  if (!url) {
+    return false;
+  }
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/forgot-password') ||
+    url.includes('/auth/reset-password')
+  );
+};
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -26,7 +46,7 @@ export const apiClient = axios.create({
 // Request Interceptor: Attach JWT token if available
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('keystone_token');
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,9 +59,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('keystone_token');
-      localStorage.removeItem('keystone_user');
+    if (error.response && error.response.status === 401 && !isPublicAuthRequest(error.config?.url)) {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
+      window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
     }
     return Promise.reject(error);
   }
@@ -65,6 +86,21 @@ export const fetchSystemHealth = async (): Promise<SystemHealthResponse> => {
 
 export const fetchUserPermissions = async (): Promise<UserPermissionsResponse> => {
   const response = await apiClient.get<UserPermissionsResponse>('/auth/permissions');
+  return response.data;
+};
+
+export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+  return response.data;
+};
+
+export const logout = async (): Promise<MessageResponse> => {
+  const response = await apiClient.post<MessageResponse>('/auth/logout');
+  return response.data;
+};
+
+export const fetchCurrentUser = async (): Promise<AuthUser> => {
+  const response = await apiClient.get<AuthUser>('/auth/me');
   return response.data;
 };
 

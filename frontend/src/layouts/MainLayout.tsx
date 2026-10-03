@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Building2, Home, Menu, Shield, Users, X } from 'lucide-react';
+import { Building2, Home, LogOut, Menu, Shield, Users, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -11,11 +12,23 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 export const MainLayout: React.FC = () => {
+  const { user, role, logout } = useAuth();
   const { hasPermission } = usePermissions();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const showCustomers = hasPermission('VIEW_CUSTOMER');
   const showSites = hasPermission('VIEW_SITE');
+  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
@@ -60,14 +73,29 @@ export const MainLayout: React.FC = () => {
             </nav>
           </div>
 
-          <button
-            type="button"
-            className="md:hidden p-2 rounded-lg border border-slate-700 text-slate-300"
-            onClick={() => setMobileOpen((open) => !open)}
-            aria-label="Toggle navigation"
-          >
-            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center space-x-3">
+            <div className="hidden sm:block text-right">
+              <p className="text-xs font-medium text-slate-200">{displayName || user?.userEmail}</p>
+              {role && <p className="text-[11px] uppercase tracking-wide text-slate-500">{role}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="hidden md:inline-flex items-center space-x-2 px-3 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm disabled:opacity-50"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{loggingOut ? 'Signing out...' : 'Logout'}</span>
+            </button>
+            <button
+              type="button"
+              className="md:hidden p-2 rounded-lg border border-slate-700 text-slate-300"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label="Toggle navigation"
+            >
+              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         {mobileOpen && (
@@ -85,6 +113,18 @@ export const MainLayout: React.FC = () => {
                 Sites
               </NavLink>
             )}
+            <div className="pt-2 border-t border-slate-800">
+              <p className="px-3 py-1 text-xs text-slate-400">{displayName || user?.userEmail}</p>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full mt-2 inline-flex items-center justify-center space-x-2 px-3 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm disabled:opacity-50"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{loggingOut ? 'Signing out...' : 'Logout'}</span>
+              </button>
+            </div>
           </nav>
         )}
       </header>

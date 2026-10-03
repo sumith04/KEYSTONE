@@ -1,8 +1,9 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { PermissionRoute } from '../components/PermissionRoute';
-import { ProtectedRoute } from '../components/ProtectedRoute';
+import { GuestRoute, ProtectedRoute } from '../components/ProtectedRoute';
 import { MainLayout } from '../layouts/MainLayout';
+import { LoginPage } from '../pages/auth/LoginPage';
 import { CustomerCreatePage } from '../pages/customers/CustomerCreatePage';
 import { CustomerDetailPage } from '../pages/customers/CustomerDetailPage';
 import { CustomerEditPage } from '../pages/customers/CustomerEditPage';
@@ -16,10 +17,14 @@ import { SiteListPage } from '../pages/sites/SiteListPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
+      <Route element={<GuestRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+      </Route>
 
-        <Route element={<ProtectedRoute redirectPath="/" />}>
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<HomePage />} />
+
           <Route element={<PermissionRoute requiredPermission="CREATE_CUSTOMER" />}>
             <Route path="customers/new" element={<CustomerCreatePage />} />
           </Route>
@@ -41,9 +46,9 @@ export const AppRoutes: React.FC = () => {
             <Route path="sites" element={<SiteListPage />} />
             <Route path="sites/:id" element={<SiteDetailPage />} />
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
       </Route>
     </Routes>
   );

@@ -130,3 +130,33 @@ export interface ListQueryParams {
   sort?: string;
   customerId?: number;
 }
+
+export type Role = 'ADMIN' | 'MANAGER' | 'DISPATCHER' | 'TECHNICIAN' | 'CUSTOMER';
+
+export interface AuthUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  userEmail: string;
+  phone: string | null;
+  role: Role;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface LoginRequest {
+  userEmail: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: string;
+  message: string;
+  user: AuthUser;
+}
+
+export interface MessageResponse {
+  message: string;
+  timestamp?: string;
+}
