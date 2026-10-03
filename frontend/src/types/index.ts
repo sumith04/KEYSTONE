@@ -131,6 +131,85 @@ export interface ListQueryParams {
   customerId?: number;
 }
 
+export type WorkOrderStatus =
+  | 'NEW'
+  | 'ASSIGNED'
+  | 'IN_PROGRESS'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'CLOSED'
+  | 'CANCELLED';
+
+export type WorkOrderPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export type WorkType =
+  | 'PREVENTIVE_MAINTENANCE'
+  | 'CORRECTIVE_MAINTENANCE'
+  | 'INSPECTION'
+  | 'EMERGENCY'
+  | 'INSTALLATION'
+  | 'OTHER';
+
+export interface WorkOrder {
+  id: number;
+  workOrderNumber: string;
+  title: string;
+  description: string | null;
+  customerId: number;
+  customerCode: string;
+  customerName: string;
+  siteId: number;
+  siteCode: string;
+  siteName: string;
+  assignedTechnicianId: number | null;
+  assignedTechnicianName: string | null;
+  assignedTechnicianEmail: string | null;
+  status: WorkOrderStatus;
+  priority: WorkOrderPriority;
+  workType: WorkType;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  actualStart: string | null;
+  actualEnd: string | null;
+  notes: string | null;
+  createdById: number | null;
+  createdByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkOrderPageResponse {
+  content: WorkOrder[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface CreateWorkOrderRequest {
+  title: string;
+  description?: string;
+  customerId: number;
+  siteId: number;
+  priority: WorkOrderPriority;
+  workType: WorkType;
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  notes?: string;
+}
+
+export interface UpdateWorkOrderRequest extends CreateWorkOrderRequest {}
+
+export interface AssignWorkOrderRequest {
+  technicianId: number;
+}
+
+export interface WorkOrderListQueryParams extends ListQueryParams {
+  priority?: WorkOrderPriority | string;
+  siteId?: number;
+  technicianId?: number;
+}
+
 export type Role = 'ADMIN' | 'MANAGER' | 'DISPATCHER' | 'TECHNICIAN' | 'CUSTOMER';
 
 export interface AuthUser {

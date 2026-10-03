@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Building2, Home, LogOut, Menu, Shield, Users, X } from 'lucide-react';
+import { Building2, ClipboardList, Home, LogOut, Menu, Shield, Users, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -19,6 +19,7 @@ export const MainLayout: React.FC = () => {
 
   const showCustomers = hasPermission('VIEW_CUSTOMER');
   const showSites = hasPermission('VIEW_SITE');
+  const showWorkOrders = hasPermission('VIEW_WORK_ORDER');
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
 
   const handleLogout = async () => {
@@ -70,6 +71,14 @@ export const MainLayout: React.FC = () => {
                   </span>
                 </NavLink>
               )}
+              {showWorkOrders && (
+                <NavLink to="/work-orders" className={navLinkClass}>
+                  <span className="inline-flex items-center space-x-2">
+                    <ClipboardList className="w-4 h-4" />
+                    <span>Work Orders</span>
+                  </span>
+                </NavLink>
+              )}
             </nav>
           </div>
 
@@ -111,6 +120,11 @@ export const MainLayout: React.FC = () => {
             {showSites && (
               <NavLink to="/sites" className={navLinkClass} onClick={() => setMobileOpen(false)}>
                 Sites
+              </NavLink>
+            )}
+            {showWorkOrders && (
+              <NavLink to="/work-orders" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+                Work Orders
               </NavLink>
             )}
             <div className="pt-2 border-t border-slate-800">

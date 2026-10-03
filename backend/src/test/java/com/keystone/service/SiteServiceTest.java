@@ -10,8 +10,10 @@ import com.keystone.enums.CustomerStatus;
 import com.keystone.enums.SiteStatus;
 import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
+import com.keystone.exception.ApiException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.WorkOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +40,9 @@ class SiteServiceTest {
 
     @Mock
     private CustomerRepository customerRepository;
+
+    @Mock
+    private WorkOrderRepository workOrderRepository;
 
     @InjectMocks
     private SiteServiceImpl siteService;
@@ -193,9 +198,20 @@ class SiteServiceTest {
     @Test
     void deleteSite_ShouldRemoveSite() {
         when(siteRepository.findByIdWithCustomer(5L)).thenReturn(Optional.of(hq));
+        when(workOrderRepository.existsBySiteId(5L)).thenReturn(false);
 
         siteService.deleteSite(5L);
 
         verify(siteRepository).delete(hq);
+    }
+
+    @Test
+    void deleteSite_WhenWorkOrdersExist_ShouldThrowConflict() {
+        when(siteRepository.findByIdWithCustomer(5L)).thenReturn(Optional.of(hq));
+        when(workOrderRepository.existsBySiteId(5L)).thenReturn(true);
+
+        ApiException exception = assertThrows(ApiException.class, () -> siteService.deleteSite(5L));
+        assertTrue(exception.getMessage().contains("work orders are associated"));
+        verify(siteRepository, never()).delete(any());
     }
 }

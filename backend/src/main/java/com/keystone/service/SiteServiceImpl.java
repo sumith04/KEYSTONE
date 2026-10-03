@@ -12,6 +12,7 @@ import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.WorkOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ public class SiteServiceImpl implements SiteService {
 
     private final SiteRepository siteRepository;
     private final CustomerRepository customerRepository;
+    private final WorkOrderRepository workOrderRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -141,12 +143,13 @@ public class SiteServiceImpl implements SiteService {
         siteRepository.delete(site);
     }
 
-    /**
-     * Reserved extension point for future operational dependents.
-     * Customer/Site management currently has no additional site dependents.
-     */
     private void assertSiteHasNoDependencies(Long siteId) {
-        // Intentionally empty until later modules register site-level dependents.
+        if (workOrderRepository.existsBySiteId(siteId)) {
+            throw new ApiException(
+                    "Cannot delete site because one or more work orders are associated with it.",
+                    HttpStatus.CONFLICT
+            );
+        }
     }
 
     private Site findSiteWithCustomer(Long id) {
