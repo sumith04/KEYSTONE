@@ -20,6 +20,7 @@ import { PartCreatePage } from '../pages/parts/PartCreatePage';
 import { PartEditPage } from '../pages/parts/PartEditPage';
 import { PartsPage } from '../pages/parts/PartsPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { TechnicianWorkspacePage } from '../pages/technician/TechnicianWorkspacePage';
 import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
@@ -98,6 +99,8 @@ export const AppRoutes: React.FC = () => {
           <Route element={<PermissionRoute requiredPermission="VIEW_SLA" />}>
             <Route path="sla-policies" element={<SlaPoliciesPage />} />
           </Route>
+
+          <Route path="notifications" element={<NotificationsPage />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

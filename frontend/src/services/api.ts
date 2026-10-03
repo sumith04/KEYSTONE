@@ -49,6 +49,10 @@ import {
   DateRangeQuery,
   RecentWorkOrder,
   TrendInterval,
+  Notification,
+  NotificationListQueryParams,
+  NotificationPage,
+  UnreadCountResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -514,5 +518,27 @@ export const getTimeReport = async (params: DateRangeQuery = {}): Promise<TimeRe
   const response = await apiClient.get<TimeReport>('/reports/time', {
     params: toDateParams(params),
   });
+  return response.data;
+};
+
+export const getNotifications = async (
+  params: NotificationListQueryParams = {}
+): Promise<NotificationPage> => {
+  const response = await apiClient.get<NotificationPage>('/notifications', { params });
+  return response.data;
+};
+
+export const getUnreadNotificationCount = async (): Promise<UnreadCountResponse> => {
+  const response = await apiClient.get<UnreadCountResponse>('/notifications/unread-count');
+  return response.data;
+};
+
+export const markNotificationAsRead = async (id: number): Promise<Notification> => {
+  const response = await apiClient.patch<Notification>(`/notifications/${id}/read`);
+  return response.data;
+};
+
+export const markAllNotificationsAsRead = async (): Promise<UnreadCountResponse> => {
+  const response = await apiClient.patch<UnreadCountResponse>('/notifications/read-all');
   return response.data;
 };

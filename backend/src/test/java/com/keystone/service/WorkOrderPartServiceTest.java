@@ -46,6 +46,9 @@ class WorkOrderPartServiceTest {
     @Mock
     private WorkOrderAccessGuard workOrderAccessGuard;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private WorkOrderPartServiceImpl workOrderPartService;
 
@@ -121,6 +124,33 @@ class WorkOrderPartServiceTest {
         assertEquals(new BigDecimal("25.00"), usageCaptor.getValue().getTotalCost());
         assertEquals(technicianA, usageCaptor.getValue().getUsedBy());
         assertEquals(50L, response.getId());
+        verify(notificationService).notifyLowStockIfNeeded(partCaptor.getValue());
+    }
+
+    @Test
+    void addWorkOrderPart_WhenStockReachesReorderLevel_ShouldRequestLowStockNotification() {
+        filter.setQuantityInStock(3);
+        filter.setReorderLevel(2);
+        CreateWorkOrderPartRequest request = CreateWorkOrderPartRequest.builder()
+                .partId(10L)
+                .quantity(1)
+                .build();
+        when(workOrderAccessGuard.requireCurrentUser(TECH_A_EMAIL)).thenReturn(technicianA);
+        when(workOrderAccessGuard.requireAccessibleWorkOrder(7L, TECH_A_EMAIL)).thenReturn(assignedToA);
+        when(partRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(filter));
+        when(workOrderPartRepository.save(any(WorkOrderPart.class))).thenAnswer(invocation -> {
+            WorkOrderPart saved = invocation.getArgument(0);
+            saved.setId(51L);
+            return saved;
+        });
+        when(workOrderPartRepository.findByIdAndWorkOrderIdWithRelations(51L, 7L))
+                .thenAnswer(invocation -> Optional.of(usage(51L, 1, filter.getQuantityInStock())));
+
+        workOrderPartService.addWorkOrderPart(7L, request, TECH_A_EMAIL);
+
+        ArgumentCaptor<Part> partCaptor = ArgumentCaptor.forClass(Part.class);
+        verify(notificationService).notifyLowStockIfNeeded(partCaptor.capture());
+        assertEquals(2, partCaptor.getValue().getQuantityInStock());
     }
 
     @Test
@@ -139,6 +169,7 @@ class WorkOrderPartServiceTest {
         );
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         verify(workOrderPartRepository, never()).save(any());
+        verify(notificationService, never()).notifyLowStockIfNeeded(any());
     }
 
     @Test

@@ -563,3 +563,49 @@ export interface TimeReport {
   minutesByTechnician: TechnicianTimeTotal[];
   minutesByWorkOrder: WorkOrderTimeTotal[];
 }
+
+export type NotificationType =
+  | 'WORK_ORDER_ASSIGNED'
+  | 'WORK_ORDER_STATUS_CHANGED'
+  | 'WORK_ORDER_COMPLETED'
+  | 'WORK_ORDER_CLOSED'
+  | 'WORK_ORDER_CANCELLED'
+  | 'SLA_AT_RISK'
+  | 'SLA_BREACHED'
+  | 'SERVICE_REQUEST'
+  | 'PART_LOW_STOCK'
+  | 'GENERAL';
+
+export type RelatedEntityType = 'WORK_ORDER' | 'PART';
+
+export interface Notification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedEntityType: RelatedEntityType | null;
+  relatedEntityId: number | null;
+  read: boolean;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export interface NotificationPage {
+  content: Notification[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  unreadCount: number;
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number;
+}
+
+export interface NotificationListQueryParams {
+  page?: number;
+  size?: number;
+  read?: boolean;
+  type?: NotificationType;
+}

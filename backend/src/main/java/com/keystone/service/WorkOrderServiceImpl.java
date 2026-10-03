@@ -74,6 +74,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final WorkOrderPartRepository workOrderPartRepository;
     private final TimeLogRepository timeLogRepository;
     private final SlaService slaService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -237,6 +238,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         }
         WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         User technician = findAssignableTechnician(request.getTechnicianId());
+        Long previousTechnicianId = workOrder.getAssignedTechnician() != null
+                ? workOrder.getAssignedTechnician().getId()
+                : null;
+        boolean technicianChanged = !technician.getId().equals(previousTechnicianId);
 
         if (workOrder.getStatus() == WorkOrderStatus.NEW) {
             transitionTo(workOrder, WorkOrderStatus.ASSIGNED);
@@ -250,7 +255,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         workOrder.setAssignedTechnician(technician);
         slaService.recordResponseIfNeeded(workOrder, LocalDateTime.now());
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        WorkOrder saved = findWorkOrder(id);
+        if (technicianChanged) {
+            notifySafely(() -> notificationService.notifyWorkOrderAssigned(technician, saved));
+        }
+        notifySafely(() -> notificationService.notifySlaIfNeeded(saved));
+        return WorkOrderResponse.fromEntity(saved);
     }
 
     @Override
@@ -265,7 +275,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             workOrder.setActualStart(LocalDateTime.now());
         }
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        return respondAfterStatusChange(id, WorkOrderStatus.IN_PROGRESS);
     }
 
     @Override
@@ -274,7 +284,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.ON_HOLD);
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        return respondAfterStatusChange(id, WorkOrderStatus.ON_HOLD);
     }
 
     @Override
@@ -283,7 +293,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.IN_PROGRESS);
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        return respondAfterStatusChange(id, WorkOrderStatus.IN_PROGRESS);
     }
 
     @Override
@@ -296,7 +306,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         }
         slaService.recordResolutionIfNeeded(workOrder, LocalDateTime.now());
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        WorkOrder saved = findWorkOrder(id);
+        notifySafely(() -> notificationService.notifyWorkOrderStatusChanged(saved, WorkOrderStatus.COMPLETED));
+        notifySafely(() -> notificationService.notifySlaIfNeeded(saved));
+        return WorkOrderResponse.fromEntity(saved);
     }
 
     @Override
@@ -305,7 +318,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.CLOSED);
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        return respondAfterStatusChange(id, WorkOrderStatus.CLOSED);
     }
 
     @Override
@@ -314,7 +327,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.CANCELLED);
         workOrderRepository.save(workOrder);
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+        return respondAfterStatusChange(id, WorkOrderStatus.CANCELLED);
     }
 
     @Override
@@ -391,6 +404,20 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private void transitionTo(WorkOrder workOrder, WorkOrderStatus nextStatus) {
         assertValidTransition(workOrder.getStatus(), nextStatus);
         workOrder.setStatus(nextStatus);
+    }
+
+    private WorkOrderResponse respondAfterStatusChange(Long id, WorkOrderStatus status) {
+        WorkOrder saved = findWorkOrder(id);
+        notifySafely(() -> notificationService.notifyWorkOrderStatusChanged(saved, status));
+        return WorkOrderResponse.fromEntity(saved);
+    }
+
+    private void notifySafely(Runnable action) {
+        try {
+            action.run();
+        } catch (Exception ignored) {
+            // Notification failures must not roll back work-order changes.
+        }
     }
 
     private void assertEditable(WorkOrder workOrder) {

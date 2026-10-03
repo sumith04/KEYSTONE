@@ -79,3 +79,29 @@ Expected output:
   "timestamp": "..."
 }
 ```
+
+---
+
+## Notifications
+
+In-app notifications are persisted in PostgreSQL (`notifications`) and scoped to the authenticated recipient. Clients never supply a recipient user ID.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/notifications` | Paginated inbox. Query: `page`, `size`, `read`, `type`. Newest first. |
+| GET | `/api/notifications/unread-count` | `{ "unreadCount": n }` using COUNT, not a full load. |
+| PATCH | `/api/notifications/{id}/read` | Idempotent. Another user's id returns 404. |
+| PATCH | `/api/notifications/read-all` | Bulk update for the current user only. |
+
+Viewing one's own inbox requires authentication only. `SEND_NOTIFICATION` is unchanged and is **not** required to read personal notifications.
+
+Automatic triggers (failures are isolated and do not roll back the business operation):
+
+- Work order assigned to a new technician → `WORK_ORDER_ASSIGNED`
+- Start / hold / resume → `WORK_ORDER_STATUS_CHANGED` for the assigned technician
+- Completed / closed / cancelled → matching type for the technician plus enabled ADMIN/MANAGER users
+- Stock usage at or below reorder level → `PART_LOW_STOCK` for ADMIN/MANAGER (deduped while unread)
+- `NotificationService.notifySlaIfNeeded(workOrder)` creates `SLA_AT_RISK` / `SLA_BREACHED` once per recipient/type/work order. KEYSTONE has no scheduler yet, so this is a hook for future monitoring rather than live SLA polling.
+- `SERVICE_REQUEST` is reserved for the Customer Portal (Prompt 13). No service-request module exists here.
+
+WebSockets / real-time push are not implemented in this module. Retention cleanup is not scheduled; add a purge job later if needed.

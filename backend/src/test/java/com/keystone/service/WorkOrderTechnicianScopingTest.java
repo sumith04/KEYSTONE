@@ -69,6 +69,9 @@ class WorkOrderTechnicianScopingTest {
     @Mock
     private SlaService slaService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;
 
