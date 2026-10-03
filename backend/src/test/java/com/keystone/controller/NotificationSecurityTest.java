@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -85,7 +86,7 @@ class NotificationSecurityTest {
 
     @Test
     void markAsRead_WhenUnauthenticated_ShouldReturn401() throws Exception {
-        mockMvc.perform(patch("/api/notifications/10/read"))
+        mockMvc.perform(patch("/api/notifications/10/read").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -112,7 +113,7 @@ class NotificationSecurityTest {
         when(notificationService.getUnreadCount("technician@keystone.com"))
                 .thenReturn(UnreadCountResponse.builder().unreadCount(0).build());
 
-        mockMvc.perform(patch("/api/notifications/read-all"))
+        mockMvc.perform(patch("/api/notifications/read-all").with(csrf()))
                 .andExpect(status().isOk());
 
         verify(notificationService).markAllAsRead("technician@keystone.com");
