@@ -13,6 +13,9 @@ import { SiteCreatePage } from '../pages/sites/SiteCreatePage';
 import { SiteDetailPage } from '../pages/sites/SiteDetailPage';
 import { SiteEditPage } from '../pages/sites/SiteEditPage';
 import { SiteListPage } from '../pages/sites/SiteListPage';
+import { PartCreatePage } from '../pages/parts/PartCreatePage';
+import { PartEditPage } from '../pages/parts/PartEditPage';
+import { PartsPage } from '../pages/parts/PartsPage';
 import { TechnicianWorkspacePage } from '../pages/technician/TechnicianWorkspacePage';
 import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
 import { WorkOrderDetailsPage } from '../pages/work-orders/WorkOrderDetailsPage';
@@ -62,6 +65,16 @@ export const AppRoutes: React.FC = () => {
             <Route path="technician" element={<TechnicianWorkspacePage />} />
             <Route path="work-orders" element={<WorkOrdersPage />} />
             <Route path="work-orders/:id" element={<WorkOrderDetailsPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute requiredPermission="ADD_PART" />}>
+            <Route path="parts/new" element={<PartCreatePage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="UPDATE_PART" />}>
+            <Route path="parts/:id/edit" element={<PartEditPage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="VIEW_PART" />}>
+            <Route path="parts" element={<PartsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

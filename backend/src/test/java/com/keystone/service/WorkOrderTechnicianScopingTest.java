@@ -18,7 +18,9 @@ import com.keystone.exception.ApiException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.TimeLogRepository;
 import com.keystone.repository.UserRepository;
+import com.keystone.repository.WorkOrderPartRepository;
 import com.keystone.repository.WorkOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +59,12 @@ class WorkOrderTechnicianScopingTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private WorkOrderPartRepository workOrderPartRepository;
+
+    @Mock
+    private TimeLogRepository timeLogRepository;
 
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;

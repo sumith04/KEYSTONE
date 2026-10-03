@@ -19,6 +19,8 @@ import {
 import { AuthUser, WorkOrder, WorkOrderStatus } from '../../types';
 import { getApiError } from '../../utils/apiError';
 import { formatDateTime, formatWorkType, WorkOrderPriorityBadge, WorkOrderStatusBadge } from './WorkOrderBadges';
+import { WorkOrderPartsSection } from './WorkOrderPartsSection';
+import { WorkOrderTimeLogsSection } from './WorkOrderTimeLogsSection';
 
 const editableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD'];
 const deletableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'CANCELLED'];
@@ -326,6 +328,9 @@ export const WorkOrderDetailsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <WorkOrderPartsSection workOrder={workOrder} />
+      <WorkOrderTimeLogsSection workOrder={workOrder} />
 
       <ConfirmDialog
         open={pendingDelete}

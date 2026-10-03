@@ -19,7 +19,9 @@ import com.keystone.exception.ApiException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.TimeLogRepository;
 import com.keystone.repository.UserRepository;
+import com.keystone.repository.WorkOrderPartRepository;
 import com.keystone.repository.WorkOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +56,12 @@ class WorkOrderServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private WorkOrderPartRepository workOrderPartRepository;
+
+    @Mock
+    private TimeLogRepository timeLogRepository;
 
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;
@@ -469,6 +477,16 @@ class WorkOrderServiceTest {
         workOrderService.deleteWorkOrder(7L, DISPATCHER_EMAIL);
 
         verify(workOrderRepository).delete(workOrder);
+    }
+
+    @Test
+    void deleteWorkOrder_WhenPartsExist_ShouldConflict() {
+        when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
+        when(workOrderPartRepository.existsByWorkOrderId(7L)).thenReturn(true);
+
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.deleteWorkOrder(7L, DISPATCHER_EMAIL));
+        assertEquals(HttpStatus.CONFLICT, exception.getStatus());
+        verify(workOrderRepository, never()).delete(any());
     }
 
     @Test

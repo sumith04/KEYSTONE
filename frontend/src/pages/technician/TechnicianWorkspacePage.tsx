@@ -72,7 +72,9 @@ export const TechnicianWorkspacePage: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">My Work Orders</h1>
-        <p className="text-sm text-slate-400">Assigned field work you can start, hold, resume, or complete.</p>
+        <p className="text-sm text-slate-400">
+          Assigned field work you can start, hold, resume, or complete. Open a work order to use parts and record time.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
