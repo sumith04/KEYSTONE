@@ -49,6 +49,12 @@ public enum Permission {
     ADD_TIME_LOG,
     VIEW_TIME_LOGS,
 
+    // SLA Management
+    VIEW_SLA,
+    CREATE_SLA,
+    UPDATE_SLA,
+    DELETE_SLA,
+
     // Analytics & Notifications
     VIEW_DASHBOARD,
     VIEW_REPORT,

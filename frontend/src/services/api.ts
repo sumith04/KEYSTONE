@@ -21,6 +21,10 @@ import {
   Site,
   SitePageResponse,
   SiteStatus,
+  SlaPolicy,
+  SlaPolicyListQueryParams,
+  SlaPolicyPageResponse,
+  SlaPolicyRequest,
   TimeLog,
   UpdateCustomerRequest,
   UpdatePartRequest,
@@ -32,6 +36,8 @@ import {
   WorkOrderListQueryParams,
   WorkOrderPageResponse,
   WorkOrderPart,
+  WorkOrderSla,
+  WorkOrderSlaPageResponse,
   WorkOrderSummary,
 } from '../types';
 
@@ -122,7 +128,9 @@ export const fetchCurrentUser = async (): Promise<AuthUser> => {
   return response.data;
 };
 
-const toListParams = (params: ListQueryParams | WorkOrderListQueryParams | PartListQueryParams = {}) => {
+const toListParams = (
+  params: ListQueryParams | WorkOrderListQueryParams | PartListQueryParams | SlaPolicyListQueryParams = {}
+) => {
   const query: Record<string, string | number> = {
     page: params.page ?? 0,
     size: params.size ?? 10,
@@ -148,6 +156,14 @@ const toListParams = (params: ListQueryParams | WorkOrderListQueryParams | PartL
   }
   if (workOrderParams.technicianId != null) {
     query.technicianId = workOrderParams.technicianId;
+  }
+  if (workOrderParams.slaStatus) {
+    query.slaStatus = workOrderParams.slaStatus;
+  }
+
+  const slaParams = params as SlaPolicyListQueryParams;
+  if (slaParams.active !== undefined && slaParams.active !== '') {
+    query.active = String(slaParams.active);
   }
 
   const partParams = params as PartListQueryParams;
@@ -369,4 +385,47 @@ export const updateTimeLog = async (
 
 export const deleteTimeLog = async (workOrderId: number, timeLogId: number): Promise<void> => {
   await apiClient.delete(`/work-orders/${workOrderId}/time-logs/${timeLogId}`);
+};
+
+export const getSlaPolicies = async (params: SlaPolicyListQueryParams = {}): Promise<SlaPolicyPageResponse> => {
+  const response = await apiClient.get<SlaPolicyPageResponse>('/sla-policies', {
+    params: toListParams({
+      ...params,
+      sort: params.sort ?? 'name,asc',
+    }),
+  });
+  return response.data;
+};
+
+export const getSlaPolicy = async (id: number): Promise<SlaPolicy> => {
+  const response = await apiClient.get<SlaPolicy>(`/sla-policies/${id}`);
+  return response.data;
+};
+
+export const createSlaPolicy = async (payload: SlaPolicyRequest): Promise<SlaPolicy> => {
+  const response = await apiClient.post<SlaPolicy>('/sla-policies', payload);
+  return response.data;
+};
+
+export const updateSlaPolicy = async (id: number, payload: SlaPolicyRequest): Promise<SlaPolicy> => {
+  const response = await apiClient.put<SlaPolicy>(`/sla-policies/${id}`, payload);
+  return response.data;
+};
+
+export const deleteSlaPolicy = async (id: number): Promise<void> => {
+  await apiClient.delete(`/sla-policies/${id}`);
+};
+
+export const getWorkOrderSla = async (workOrderId: number): Promise<WorkOrderSla> => {
+  const response = await apiClient.get<WorkOrderSla>(`/work-orders/${workOrderId}/sla`);
+  return response.data;
+};
+
+export const getWorkOrderSlaList = async (
+  params: WorkOrderListQueryParams = {}
+): Promise<WorkOrderSlaPageResponse> => {
+  const response = await apiClient.get<WorkOrderSlaPageResponse>('/work-orders/sla', {
+    params: toListParams(params),
+  });
+  return response.data;
 };

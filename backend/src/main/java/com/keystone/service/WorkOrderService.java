@@ -6,7 +6,10 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSlaPageResponse;
+import com.keystone.dto.WorkOrderSlaResponse;
 import com.keystone.dto.WorkOrderSummaryResponse;
+import com.keystone.enums.SlaStatus;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 
@@ -24,6 +27,7 @@ public interface WorkOrderService {
             Long customerId,
             Long siteId,
             Long technicianId,
+            SlaStatus slaStatus,
             String currentUsername
     );
 
@@ -54,4 +58,20 @@ public interface WorkOrderService {
     void deleteWorkOrder(Long id, String currentUsername);
 
     List<UserResponse> getAssignableTechnicians();
+
+    WorkOrderSlaResponse getWorkOrderSla(Long id, String currentUsername);
+
+    WorkOrderSlaPageResponse getWorkOrderSlaList(
+            int page,
+            int size,
+            String sort,
+            String search,
+            WorkOrderStatus status,
+            WorkOrderPriority priority,
+            Long customerId,
+            Long siteId,
+            Long technicianId,
+            SlaStatus slaStatus,
+            String currentUsername
+    );
 }

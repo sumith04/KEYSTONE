@@ -66,6 +66,9 @@ class WorkOrderTechnicianScopingTest {
     @Mock
     private TimeLogRepository timeLogRepository;
 
+    @Mock
+    private SlaService slaService;
+
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;
 
@@ -113,7 +116,7 @@ class WorkOrderTechnicianScopingTest {
                 .thenReturn(new PageImpl<>(List.of(assignedToA)));
 
         WorkOrderPageResponse response = workOrderService.getWorkOrders(
-                0, 10, "createdAt,desc", null, null, null, null, null, 26L, TECH_A_EMAIL);
+                0, 10, "createdAt,desc", null, null, null, null, null, 26L, null, TECH_A_EMAIL);
 
         assertEquals(1, response.getContent().size());
         assertEquals("WO-000007", response.getContent().get(0).getWorkOrderNumber());
@@ -176,9 +179,9 @@ class WorkOrderTechnicianScopingTest {
                 .thenReturn(new PageImpl<>(List.of(assignedToA, assignedToB)));
 
         WorkOrderPageResponse adminPage = workOrderService.getWorkOrders(
-                0, 10, "createdAt", null, null, null, null, null, null, ADMIN_EMAIL);
+                0, 10, "createdAt", null, null, null, null, null, null, null, ADMIN_EMAIL);
         WorkOrderPageResponse dispatcherPage = workOrderService.getWorkOrders(
-                0, 10, "createdAt", null, null, null, null, null, null, DISPATCHER_EMAIL);
+                0, 10, "createdAt", null, null, null, null, null, null, null, DISPATCHER_EMAIL);
 
         assertEquals(2, adminPage.getContent().size());
         assertEquals(2, dispatcherPage.getContent().size());

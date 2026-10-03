@@ -7,9 +7,9 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
 import { usePermissions } from '../../hooks/usePermissions';
 import { deleteWorkOrder, getAssignableTechnicians, getCustomers, getWorkOrders } from '../../services/api';
-import { AuthUser, Customer, WorkOrder, WorkOrderPageResponse, WorkOrderPriority, WorkOrderStatus } from '../../types';
+import { AuthUser, Customer, SlaStatus, WorkOrder, WorkOrderPageResponse, WorkOrderPriority, WorkOrderStatus } from '../../types';
 import { getApiError } from '../../utils/apiError';
-import { formatDateTime, formatWorkType, WorkOrderPriorityBadge, WorkOrderStatusBadge } from './WorkOrderBadges';
+import { formatDateTime, formatWorkType, SlaStatusBadge, WorkOrderPriorityBadge, WorkOrderStatusBadge } from './WorkOrderBadges';
 
 const editableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD'];
 const deletableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'CANCELLED'];
@@ -28,6 +28,7 @@ export const WorkOrdersPage: React.FC = () => {
   const [priority, setPriority] = useState<WorkOrderPriority | ''>('');
   const [customerId, setCustomerId] = useState<number | ''>('');
   const [technicianId, setTechnicianId] = useState<number | ''>('');
+  const [slaStatus, setSlaStatus] = useState<SlaStatus | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export const WorkOrdersPage: React.FC = () => {
         priority: priority || undefined,
         customerId: customerId === '' ? undefined : customerId,
         technicianId: technicianId === '' ? undefined : technicianId,
+        slaStatus: slaStatus || undefined,
         sort: 'createdAt,desc',
       });
       setPageData(data);
@@ -69,7 +71,7 @@ export const WorkOrdersPage: React.FC = () => {
     }
     loadWorkOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, status, priority, customerId, technicianId, role]);
+  }, [page, search, status, priority, customerId, technicianId, slaStatus, role]);
 
   useEffect(() => {
     if (canViewCustomers) {
@@ -213,6 +215,21 @@ export const WorkOrdersPage: React.FC = () => {
             Search
           </button>
         )}
+        <select
+          value={slaStatus}
+          onChange={(event) => {
+            setPage(0);
+            setSlaStatus(event.target.value as SlaStatus | '');
+          }}
+          className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:col-span-2"
+        >
+          <option value="">All SLA statuses</option>
+          <option value="ON_TRACK">On track</option>
+          <option value="AT_RISK">At risk</option>
+          <option value="BREACHED">Breached</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="NO_SLA">No SLA</option>
+        </select>
         {canFilterTechnicians && (
           <button type="submit" className="md:col-span-6 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 text-sm">
             Search
@@ -239,6 +256,7 @@ export const WorkOrdersPage: React.FC = () => {
                   <th className="text-left px-4 py-3 font-medium">Site</th>
                   <th className="text-left px-4 py-3 font-medium">Technician</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">SLA</th>
                   <th className="text-left px-4 py-3 font-medium">Priority</th>
                   <th className="text-left px-4 py-3 font-medium">Work type</th>
                   <th className="text-left px-4 py-3 font-medium">Scheduled</th>
@@ -255,6 +273,9 @@ export const WorkOrdersPage: React.FC = () => {
                     <td className="px-4 py-3 text-slate-400">{workOrder.assignedTechnicianName || 'Unassigned'}</td>
                     <td className="px-4 py-3">
                       <WorkOrderStatusBadge status={workOrder.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <SlaStatusBadge status={workOrder.slaStatus} />
                     </td>
                     <td className="px-4 py-3">
                       <WorkOrderPriorityBadge priority={workOrder.priority} />

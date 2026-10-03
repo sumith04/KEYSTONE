@@ -1,14 +1,16 @@
 package com.keystone.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.keystone.config.CustomUserDetailsService;
 import com.keystone.config.JwtAuthenticationFilter;
 import com.keystone.config.JwtTokenProvider;
 import com.keystone.config.MethodSecurityTestConfig;
 import com.keystone.config.RolePermissionMapper;
 import com.keystone.config.TokenBlacklistService;
-import com.keystone.dto.WorkOrderPageResponse;
+import com.keystone.dto.CreateSlaPolicyRequest;
+import com.keystone.enums.WorkOrderPriority;
 import com.keystone.service.AuthorizationService;
-import com.keystone.service.WorkOrderService;
+import com.keystone.service.SlaService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -18,32 +20,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = WorkOrderController.class)
+@WebMvcTest(controllers = SlaPolicyController.class)
 @Import(MethodSecurityTestConfig.class)
-class WorkOrderSecurityTest {
+class SlaPolicySecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
-    private WorkOrderService workOrderService;
+    private SlaService slaService;
 
     @MockBean(name = "authorizationService")
     private AuthorizationService authorizationService;
@@ -75,44 +75,33 @@ class WorkOrderSecurityTest {
     }
 
     @Test
-    void getWorkOrders_WhenUnauthenticated_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/work-orders"))
+    void getPolicies_WhenUnauthenticated_ShouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/sla-policies"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = "customer@keystone.com", roles = {"CUSTOMER"})
-    void getWorkOrders_WhenCustomerRole_ShouldReturn403() throws Exception {
-        when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(false);
+    void getPolicies_WhenCustomer_ShouldReturn403() throws Exception {
+        when(authorizationService.hasPermission(any(), eq("VIEW_SLA"))).thenReturn(false);
 
-        mockMvc.perform(get("/api/work-orders"))
+        mockMvc.perform(get("/api/sla-policies"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "technician@keystone.com", roles = {"TECHNICIAN"})
-    void getWorkOrders_WhenTechnician_ShouldReturn200() throws Exception {
-        when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrders(anyInt(), anyInt(), anyString(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), anyString()))
-                .thenReturn(WorkOrderPageResponse.builder()
-                        .content(List.of())
-                        .page(0)
-                        .size(10)
-                        .totalElements(0)
-                        .totalPages(0)
-                        .build());
+    void createPolicy_WhenTechnician_ShouldReturn403() throws Exception {
+        when(authorizationService.hasPermission(any(), eq("CREATE_SLA"))).thenReturn(false);
 
-        mockMvc.perform(get("/api/work-orders"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray());
-    }
-
-    @Test
-    @WithMockUser(username = "dispatcher@keystone.com", roles = {"DISPATCHER"})
-    void startWorkOrder_WhenDispatcher_ShouldReturn403() throws Exception {
-        when(authorizationService.hasPermission(any(), eq("START_WORK"))).thenReturn(false);
-
-        mockMvc.perform(post("/api/work-orders/7/start"))
+        mockMvc.perform(post("/api/sla-policies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(CreateSlaPolicyRequest.builder()
+                                .name("Gold")
+                                .priority(WorkOrderPriority.HIGH)
+                                .responseTimeMinutes(60)
+                                .resolutionTimeMinutes(240)
+                                .build())))
                 .andExpect(status().isForbidden());
     }
 }

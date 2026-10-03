@@ -20,6 +20,7 @@ import { AuthUser, WorkOrder, WorkOrderStatus } from '../../types';
 import { getApiError } from '../../utils/apiError';
 import { formatDateTime, formatWorkType, WorkOrderPriorityBadge, WorkOrderStatusBadge } from './WorkOrderBadges';
 import { WorkOrderPartsSection } from './WorkOrderPartsSection';
+import { WorkOrderSlaSection } from './WorkOrderSlaSection';
 import { WorkOrderTimeLogsSection } from './WorkOrderTimeLogsSection';
 
 const editableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD'];
@@ -329,6 +330,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
         </div>
       )}
 
+      <WorkOrderSlaSection workOrder={workOrder} />
       <WorkOrderPartsSection workOrder={workOrder} />
       <WorkOrderTimeLogsSection workOrder={workOrder} />
 

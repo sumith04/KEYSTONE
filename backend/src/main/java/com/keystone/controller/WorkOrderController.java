@@ -6,7 +6,10 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSlaPageResponse;
+import com.keystone.dto.WorkOrderSlaResponse;
 import com.keystone.dto.WorkOrderSummaryResponse;
+import com.keystone.enums.SlaStatus;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.service.WorkOrderService;
@@ -40,10 +43,12 @@ public class WorkOrderController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long siteId,
             @RequestParam(required = false) Long technicianId,
+            @RequestParam(required = false) SlaStatus slaStatus,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         return ResponseEntity.ok(workOrderService.getWorkOrders(
-                page, size, sort, search, status, priority, customerId, siteId, technicianId, userDetails.getUsername()));
+                page, size, sort, search, status, priority, customerId, siteId, technicianId, slaStatus,
+                userDetails.getUsername()));
     }
 
     @GetMapping("/summary")
@@ -51,6 +56,33 @@ public class WorkOrderController {
     public ResponseEntity<WorkOrderSummaryResponse> getWorkOrderSummary(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(workOrderService.getWorkOrderSummary(userDetails.getUsername()));
+    }
+
+    @GetMapping("/sla")
+    @PreAuthorize("@authorizationService.hasPermission(authentication, 'VIEW_WORK_ORDER')")
+    public ResponseEntity<WorkOrderSlaPageResponse> getWorkOrderSlaList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) WorkOrderStatus status,
+            @RequestParam(required = false) WorkOrderPriority priority,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) Long siteId,
+            @RequestParam(required = false) Long technicianId,
+            @RequestParam(required = false) SlaStatus slaStatus,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.getWorkOrderSlaList(
+                page, size, sort, search, status, priority, customerId, siteId, technicianId, slaStatus,
+                userDetails.getUsername()));
+    }
+
+    @GetMapping("/{id}/sla")
+    @PreAuthorize("@authorizationService.hasPermission(authentication, 'VIEW_WORK_ORDER')")
+    public ResponseEntity<WorkOrderSlaResponse> getWorkOrderSla(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.getWorkOrderSla(id, userDetails.getUsername()));
     }
 
     @GetMapping("/technicians")

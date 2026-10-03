@@ -43,6 +43,9 @@ export interface Customer {
   country: string | null;
   status: CustomerStatus;
   notes: string | null;
+  slaPolicyId: number | null;
+  slaPolicyName: string | null;
+  slaPolicyActive: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -70,6 +73,7 @@ export interface CreateCustomerRequest {
   postalCode?: string;
   country?: string;
   notes?: string;
+  slaPolicyId?: number | null;
 }
 
 export interface UpdateCustomerRequest extends CreateCustomerRequest {}
@@ -131,6 +135,8 @@ export interface ListQueryParams {
   customerId?: number;
 }
 
+export type SlaStatus = 'ON_TRACK' | 'AT_RISK' | 'BREACHED' | 'RESOLVED' | 'NO_SLA';
+
 export type WorkOrderStatus =
   | 'NEW'
   | 'ASSIGNED'
@@ -174,6 +180,15 @@ export interface WorkOrder {
   notes: string | null;
   createdById: number | null;
   createdByName: string | null;
+  slaPolicyId: number | null;
+  slaPolicyName: string | null;
+  slaStatus: SlaStatus;
+  responseDueAt: string | null;
+  responseAt: string | null;
+  responseBreached: boolean | null;
+  resolutionDueAt: string | null;
+  resolvedAt: string | null;
+  resolutionBreached: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -215,6 +230,65 @@ export interface WorkOrderListQueryParams extends ListQueryParams {
   priority?: WorkOrderPriority | string;
   siteId?: number;
   technicianId?: number;
+  slaStatus?: SlaStatus | string;
+}
+
+export interface SlaPolicy {
+  id: number;
+  name: string;
+  description: string | null;
+  priority: WorkOrderPriority;
+  responseTimeMinutes: number;
+  resolutionTimeMinutes: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SlaPolicyPageResponse {
+  content: SlaPolicy[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface SlaPolicyRequest {
+  name: string;
+  description?: string;
+  priority: WorkOrderPriority;
+  responseTimeMinutes: number;
+  resolutionTimeMinutes: number;
+  active?: boolean;
+}
+
+export interface SlaPolicyListQueryParams extends ListQueryParams {
+  priority?: WorkOrderPriority | string;
+  active?: boolean | string;
+}
+
+export interface WorkOrderSla {
+  workOrderId: number;
+  workOrderNumber: string;
+  title?: string;
+  slaPolicyName: string | null;
+  slaStatus: SlaStatus;
+  responseDueAt: string | null;
+  responseAt: string | null;
+  responseBreached: boolean | null;
+  resolutionDueAt: string | null;
+  resolvedAt: string | null;
+  resolutionBreached: boolean | null;
+  remainingResponseMinutes: number | null;
+  remainingResolutionMinutes: number | null;
+}
+
+export interface WorkOrderSlaPageResponse {
+  content: WorkOrderSla[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export type Role = 'ADMIN' | 'MANAGER' | 'DISPATCHER' | 'TECHNICIAN' | 'CUSTOMER';

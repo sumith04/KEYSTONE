@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Building2, ClipboardList, Home, LogOut, Menu, Package, Shield, Users, Wrench, X } from 'lucide-react';
+import { Building2, ClipboardList, Home, LogOut, Menu, Package, Shield, Timer, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -23,6 +23,7 @@ export const MainLayout: React.FC = () => {
   const showWorkOrders = hasPermission('VIEW_WORK_ORDER') && !isTechnician;
   const showTechnicianWorkspace = hasPermission('VIEW_WORK_ORDER') && isTechnician;
   const showParts = hasPermission('VIEW_PART');
+  const showSlaPolicies = hasPermission('VIEW_SLA');
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
 
   const handleLogout = async () => {
@@ -98,6 +99,14 @@ export const MainLayout: React.FC = () => {
                   </span>
                 </NavLink>
               )}
+              {showSlaPolicies && (
+                <NavLink to="/sla-policies" className={navLinkClass}>
+                  <span className="inline-flex items-center space-x-2">
+                    <Timer className="w-4 h-4" />
+                    <span>SLA</span>
+                  </span>
+                </NavLink>
+              )}
             </nav>
           </div>
 
@@ -154,6 +163,11 @@ export const MainLayout: React.FC = () => {
             {showParts && (
               <NavLink to="/parts" className={navLinkClass} onClick={() => setMobileOpen(false)}>
                 Parts
+              </NavLink>
+            )}
+            {showSlaPolicies && (
+              <NavLink to="/sla-policies" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+                SLA
               </NavLink>
             )}
             <div className="pt-2 border-t border-slate-800">

@@ -4,9 +4,11 @@ import com.keystone.entity.Customer;
 import com.keystone.entity.Site;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
+import com.keystone.enums.SlaStatus;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.enums.WorkType;
+import com.keystone.service.SlaCalculator;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -41,6 +43,15 @@ public class WorkOrderResponse {
     private String notes;
     private Long createdById;
     private String createdByName;
+    private Long slaPolicyId;
+    private String slaPolicyName;
+    private SlaStatus slaStatus;
+    private LocalDateTime responseDueAt;
+    private LocalDateTime responseAt;
+    private Boolean responseBreached;
+    private LocalDateTime resolutionDueAt;
+    private LocalDateTime resolvedAt;
+    private Boolean resolutionBreached;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -78,6 +89,19 @@ public class WorkOrderResponse {
                 .notes(workOrder.getNotes())
                 .createdById(createdBy != null ? createdBy.getId() : null)
                 .createdByName(formatUserName(createdBy))
+                .slaPolicyId(workOrder.getSlaPolicy() != null ? workOrder.getSlaPolicy().getId() : null)
+                .slaPolicyName(workOrder.getSlaPolicyName())
+                .slaStatus(SlaCalculator.calculateStatus(workOrder, LocalDateTime.now()))
+                .responseDueAt(workOrder.getSlaResponseDueAt())
+                .responseAt(workOrder.getResponseAt())
+                .responseBreached(SlaCalculator.hasSla(workOrder)
+                        ? SlaCalculator.isResponseBreached(workOrder, LocalDateTime.now())
+                        : null)
+                .resolutionDueAt(workOrder.getSlaResolutionDueAt())
+                .resolvedAt(workOrder.getResolvedAt())
+                .resolutionBreached(SlaCalculator.hasSla(workOrder)
+                        ? SlaCalculator.isResolutionBreached(workOrder, LocalDateTime.now())
+                        : null)
                 .createdAt(workOrder.getCreatedAt())
                 .updatedAt(workOrder.getUpdatedAt())
                 .build();

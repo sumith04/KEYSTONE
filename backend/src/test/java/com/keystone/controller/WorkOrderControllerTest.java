@@ -198,7 +198,7 @@ class WorkOrderControllerTest {
 
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
         when(workOrderService.getWorkOrders(
-                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, 200L, "admin@keystone.com"))
+                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, 200L, null, "admin@keystone.com"))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/work-orders")
@@ -418,7 +418,7 @@ class WorkOrderControllerTest {
     @WithMockUser(username = "admin@keystone.com", roles = {"ADMIN"})
     void getWorkOrders_DefaultSort_ShouldPassCreatedAt() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrders(0, 10, "createdAt", null, null, null, null, null, null, "admin@keystone.com"))
+        when(workOrderService.getWorkOrders(0, 10, "createdAt", null, null, null, null, null, null, null, "admin@keystone.com"))
                 .thenReturn(WorkOrderPageResponse.builder().content(List.of()).page(0).size(10).totalElements(0).totalPages(0).build());
 
         mockMvc.perform(get("/api/work-orders"))
