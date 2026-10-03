@@ -71,4 +71,6 @@ The compiled static assets will be output to the `dist/` directory.
 
 Authenticated users see a header bell (unread badge + recent dropdown) and a `/notifications` page. Both use `/api/notifications` through the shared Axios client. Recipient IDs are never sent from the browser.
 
-`NotificationContext.applyIncomingNotification` is the hook Prompt 12 can use for WebSocket updates. This build does not poll and does not open a socket.
+After login, `NotificationContext` opens one STOMP connection over SockJS to `{API origin}/ws` and subscribes to `/user/queue/notifications`. Incoming payloads go through `applyIncomingNotification` (deduped by notification ID). The socket disconnects on logout or JWT expiry and reconnects every 3 seconds while a valid token remains.
+
+The SockJS URL is derived from `VITE_API_BASE_URL` (`http://localhost:8080/api` → `http://localhost:8080/ws`). Native `ws`/`wss` is only needed if SockJS is removed later.

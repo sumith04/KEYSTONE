@@ -50,6 +50,9 @@ class NotificationServiceTest {
     @Mock
     private NotificationCreator notificationCreator;
 
+    @Mock
+    private NotificationPublisher notificationPublisher;
+
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
@@ -113,6 +116,26 @@ class NotificationServiceTest {
 
         assertEquals(10L, response.getId());
         assertEquals(NotificationType.WORK_ORDER_ASSIGNED, response.getType());
+        verify(notificationCreator).persist(1L, NotificationType.GENERAL, "Hello", "Welcome", null, null);
+        verify(notificationPublisher).publishSafely(aliceNotification);
+    }
+
+    @Test
+    void createNotification_WhenWebSocketPublishFails_ShouldStillReturnPersistedNotification() {
+        when(notificationCreator.persist(
+                eq(1L),
+                eq(NotificationType.GENERAL),
+                eq("Hello"),
+                eq("Welcome"),
+                isNull(),
+                isNull()
+        )).thenReturn(aliceNotification);
+        doThrow(new RuntimeException("broker down")).when(notificationPublisher).publishSafely(aliceNotification);
+
+        NotificationResponse response = notificationService.createNotification(
+                1L, NotificationType.GENERAL, "Hello", "Welcome", null, null);
+
+        assertEquals(10L, response.getId());
         verify(notificationCreator).persist(1L, NotificationType.GENERAL, "Hello", "Welcome", null, null);
     }
 
