@@ -186,6 +186,13 @@ export interface WorkOrderPageResponse {
   totalPages: number;
 }
 
+export interface WorkOrderSummary {
+  assigned: number;
+  inProgress: number;
+  onHold: number;
+  completed: number;
+}
+
 export interface CreateWorkOrderRequest {
   title: string;
   description?: string;

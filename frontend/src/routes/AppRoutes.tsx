@@ -13,6 +13,7 @@ import { SiteCreatePage } from '../pages/sites/SiteCreatePage';
 import { SiteDetailPage } from '../pages/sites/SiteDetailPage';
 import { SiteEditPage } from '../pages/sites/SiteEditPage';
 import { SiteListPage } from '../pages/sites/SiteListPage';
+import { TechnicianWorkspacePage } from '../pages/technician/TechnicianWorkspacePage';
 import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
 import { WorkOrderDetailsPage } from '../pages/work-orders/WorkOrderDetailsPage';
 import { WorkOrderEditPage } from '../pages/work-orders/WorkOrderEditPage';
@@ -58,6 +59,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="work-orders/:id/edit" element={<WorkOrderEditPage />} />
           </Route>
           <Route element={<PermissionRoute requiredPermission="VIEW_WORK_ORDER" />}>
+            <Route path="technician" element={<TechnicianWorkspacePage />} />
             <Route path="work-orders" element={<WorkOrdersPage />} />
             <Route path="work-orders/:id" element={<WorkOrderDetailsPage />} />
           </Route>

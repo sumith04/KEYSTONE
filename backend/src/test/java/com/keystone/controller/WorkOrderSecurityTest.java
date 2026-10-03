@@ -93,7 +93,7 @@ class WorkOrderSecurityTest {
     @WithMockUser(username = "technician@keystone.com", roles = {"TECHNICIAN"})
     void getWorkOrders_WhenTechnician_ShouldReturn200() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrders(anyInt(), anyInt(), anyString(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
+        when(workOrderService.getWorkOrders(anyInt(), anyInt(), anyString(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), anyString()))
                 .thenReturn(WorkOrderPageResponse.builder()
                         .content(List.of())
                         .page(0)

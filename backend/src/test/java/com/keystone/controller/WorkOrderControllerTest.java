@@ -154,7 +154,7 @@ class WorkOrderControllerTest {
     @WithMockUser(username = "admin@keystone.com", roles = {"ADMIN"})
     void getWorkOrder_WhenExists_ShouldReturn200() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrderById(7L)).thenReturn(workOrderResponse);
+        when(workOrderService.getWorkOrderById(7L, "admin@keystone.com")).thenReturn(workOrderResponse);
 
         mockMvc.perform(get("/api/work-orders/7"))
                 .andExpect(status().isOk())
@@ -166,7 +166,7 @@ class WorkOrderControllerTest {
     @WithMockUser(username = "admin@keystone.com", roles = {"ADMIN"})
     void getWorkOrder_WhenMissing_ShouldReturn404() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrderById(99L))
+        when(workOrderService.getWorkOrderById(99L, "admin@keystone.com"))
                 .thenThrow(new ResourceNotFoundException("Work order not found with id: 99"));
 
         mockMvc.perform(get("/api/work-orders/99"))
@@ -178,7 +178,7 @@ class WorkOrderControllerTest {
     @WithMockUser(username = "admin@keystone.com", roles = {"ADMIN"})
     void getWorkOrderByNumber_ShouldReturn200() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrderByNumber("WO-000007")).thenReturn(workOrderResponse);
+        when(workOrderService.getWorkOrderByNumber("WO-000007", "admin@keystone.com")).thenReturn(workOrderResponse);
 
         mockMvc.perform(get("/api/work-orders/number/WO-000007"))
                 .andExpect(status().isOk())
@@ -198,7 +198,7 @@ class WorkOrderControllerTest {
 
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
         when(workOrderService.getWorkOrders(
-                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, 200L))
+                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, 200L, "admin@keystone.com"))
                 .thenReturn(pageResponse);
 
         mockMvc.perform(get("/api/work-orders")
@@ -227,7 +227,7 @@ class WorkOrderControllerTest {
         workOrderResponse.setTitle("Updated HVAC work");
 
         when(authorizationService.hasPermission(any(), eq("UPDATE_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.updateWorkOrder(eq(7L), any(UpdateWorkOrderRequest.class))).thenReturn(workOrderResponse);
+        when(workOrderService.updateWorkOrder(eq(7L), any(UpdateWorkOrderRequest.class), eq("dispatcher@keystone.com"))).thenReturn(workOrderResponse);
 
         mockMvc.perform(put("/api/work-orders/7")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -242,7 +242,7 @@ class WorkOrderControllerTest {
         workOrderResponse.setStatus(WorkOrderStatus.ASSIGNED);
         workOrderResponse.setAssignedTechnicianId(200L);
         when(authorizationService.hasPermission(any(), eq("ASSIGN_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.assignWorkOrder(eq(7L), any(AssignWorkOrderRequest.class))).thenReturn(workOrderResponse);
+        when(workOrderService.assignWorkOrder(eq(7L), any(AssignWorkOrderRequest.class), eq("manager@keystone.com"))).thenReturn(workOrderResponse);
 
         mockMvc.perform(post("/api/work-orders/7/assign")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -272,10 +272,10 @@ class WorkOrderControllerTest {
         when(authorizationService.hasPermission(any(), eq("COMPLETE_WORK"))).thenReturn(true);
 
         workOrderResponse.setStatus(WorkOrderStatus.IN_PROGRESS);
-        when(workOrderService.startWorkOrder(7L)).thenReturn(workOrderResponse);
-        when(workOrderService.holdWorkOrder(7L)).thenReturn(workOrderResponse);
-        when(workOrderService.resumeWorkOrder(7L)).thenReturn(workOrderResponse);
-        when(workOrderService.completeWorkOrder(7L)).thenReturn(workOrderResponse);
+        when(workOrderService.startWorkOrder(7L, "technician@keystone.com")).thenReturn(workOrderResponse);
+        when(workOrderService.holdWorkOrder(7L, "technician@keystone.com")).thenReturn(workOrderResponse);
+        when(workOrderService.resumeWorkOrder(7L, "technician@keystone.com")).thenReturn(workOrderResponse);
+        when(workOrderService.completeWorkOrder(7L, "technician@keystone.com")).thenReturn(workOrderResponse);
 
         mockMvc.perform(post("/api/work-orders/7/start")).andExpect(status().isOk());
         mockMvc.perform(post("/api/work-orders/7/hold")).andExpect(status().isOk());
@@ -288,8 +288,8 @@ class WorkOrderControllerTest {
     void closeAndCancel_ShouldReturn200() throws Exception {
         when(authorizationService.hasPermission(any(), eq("CLOSE_WORK_ORDER"))).thenReturn(true);
         when(authorizationService.hasPermission(any(), eq("CANCEL_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.closeWorkOrder(7L)).thenReturn(workOrderResponse);
-        when(workOrderService.cancelWorkOrder(7L)).thenReturn(workOrderResponse);
+        when(workOrderService.closeWorkOrder(7L, "manager@keystone.com")).thenReturn(workOrderResponse);
+        when(workOrderService.cancelWorkOrder(7L, "manager@keystone.com")).thenReturn(workOrderResponse);
 
         mockMvc.perform(post("/api/work-orders/7/close")).andExpect(status().isOk());
         mockMvc.perform(post("/api/work-orders/7/cancel")).andExpect(status().isOk());
@@ -299,7 +299,7 @@ class WorkOrderControllerTest {
     @WithMockUser(username = "technician@keystone.com", roles = {"TECHNICIAN"})
     void completeWorkOrder_WhenInvalidTransition_ShouldReturn409() throws Exception {
         when(authorizationService.hasPermission(any(), eq("COMPLETE_WORK"))).thenReturn(true);
-        when(workOrderService.completeWorkOrder(7L))
+        when(workOrderService.completeWorkOrder(7L, "technician@keystone.com"))
                 .thenThrow(new ApiException("Invalid work order status transition from ASSIGNED to COMPLETED.", HttpStatus.CONFLICT));
 
         mockMvc.perform(post("/api/work-orders/7/complete"))
@@ -312,7 +312,7 @@ class WorkOrderControllerTest {
     void deleteWorkOrder_WhenClosed_ShouldReturn409() throws Exception {
         when(authorizationService.hasPermission(any(), eq("DELETE_WORK_ORDER"))).thenReturn(true);
         doThrow(new ApiException("Completed or closed work orders cannot be deleted.", HttpStatus.CONFLICT))
-                .when(workOrderService).deleteWorkOrder(7L);
+                .when(workOrderService).deleteWorkOrder(7L, "manager@keystone.com");
 
         mockMvc.perform(delete("/api/work-orders/7"))
                 .andExpect(status().isConflict())
@@ -392,10 +392,33 @@ class WorkOrderControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "technician@keystone.com", roles = {"TECHNICIAN"})
+    void getWorkOrder_WhenNotAssignedToTechnician_ShouldReturn404() throws Exception {
+        when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
+        when(workOrderService.getWorkOrderById(8L, "technician@keystone.com"))
+                .thenThrow(new ResourceNotFoundException("Work order not found with id: 8"));
+
+        mockMvc.perform(get("/api/work-orders/8"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Work order not found with id: 8"));
+    }
+
+    @Test
+    @WithMockUser(username = "technician@keystone.com", roles = {"TECHNICIAN"})
+    void startWorkOrder_WhenNotAssignedToTechnician_ShouldReturn404() throws Exception {
+        when(authorizationService.hasPermission(any(), eq("START_WORK"))).thenReturn(true);
+        when(workOrderService.startWorkOrder(8L, "technician@keystone.com"))
+                .thenThrow(new ResourceNotFoundException("Work order not found with id: 8"));
+
+        mockMvc.perform(post("/api/work-orders/8/start"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @WithMockUser(username = "admin@keystone.com", roles = {"ADMIN"})
     void getWorkOrders_DefaultSort_ShouldPassCreatedAt() throws Exception {
         when(authorizationService.hasPermission(any(), eq("VIEW_WORK_ORDER"))).thenReturn(true);
-        when(workOrderService.getWorkOrders(0, 10, "createdAt", null, null, null, null, null, null))
+        when(workOrderService.getWorkOrders(0, 10, "createdAt", null, null, null, null, null, null, "admin@keystone.com"))
                 .thenReturn(WorkOrderPageResponse.builder().content(List.of()).page(0).size(10).totalElements(0).totalPages(0).build());
 
         mockMvc.perform(get("/api/work-orders"))
