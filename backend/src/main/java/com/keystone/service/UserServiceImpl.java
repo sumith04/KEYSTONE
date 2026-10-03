@@ -4,11 +4,13 @@ import com.keystone.dto.CreateUserRequest;
 import com.keystone.dto.UpdateUserRequest;
 import com.keystone.dto.UserPageResponse;
 import com.keystone.dto.UserResponse;
+import com.keystone.entity.Customer;
 import com.keystone.entity.User;
 import com.keystone.enums.Role;
 import com.keystone.exception.ApiException;
 import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
+import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -80,6 +83,7 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone() != null ? request.getPhone().trim() : null)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .customer(resolveCustomerLink(request.getRole(), request.getCustomerId()))
                 .enabled(true)
                 .build();
 
@@ -110,6 +114,7 @@ public class UserServiceImpl implements UserService {
         user.setLastName(request.getLastName().trim());
         user.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
         user.setRole(request.getRole());
+        user.setCustomer(resolveCustomerLink(request.getRole(), request.getCustomerId()));
         user.setEnabled(request.getEnabled());
 
         User updatedUser = userRepository.save(user);
@@ -148,5 +153,16 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.delete(user);
+    }
+
+    private Customer resolveCustomerLink(Role role, Long customerId) {
+        if (role != Role.CUSTOMER) {
+            return null;
+        }
+        if (customerId == null) {
+            throw new ApiException("Customer users must be linked to a customer record.", HttpStatus.BAD_REQUEST);
+        }
+        return customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
     }
 }

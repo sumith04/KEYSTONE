@@ -62,5 +62,10 @@ public enum Permission {
 
     // Customer Self-Service
     REQUEST_RAISE,
-    VIEW_OWN_REQUEST
+    VIEW_OWN_REQUEST,
+
+    // Internal service request management
+    VIEW_SERVICE_REQUEST,
+    UPDATE_SERVICE_REQUEST,
+    CONVERT_SERVICE_REQUEST
 }

@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { BarChart3, Building2, ClipboardList, Home, LayoutDashboard, LogOut, Menu, Package, Shield, Timer, Users, Wrench, X } from 'lucide-react';
+import {
+  BarChart3,
+  Bell,
+  Building2,
+  ClipboardList,
+  Home,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Shield,
+  Timer,
+  UserRound,
+  Users,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { NotificationBell } from '../components/NotificationBell';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
@@ -18,15 +35,17 @@ export const MainLayout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const showCustomers = hasPermission('VIEW_CUSTOMER');
-  const showSites = hasPermission('VIEW_SITE');
+  const isCustomer = role === 'CUSTOMER';
+  const showCustomers = !isCustomer && hasPermission('VIEW_CUSTOMER');
+  const showSites = !isCustomer && hasPermission('VIEW_SITE');
   const isTechnician = role === 'TECHNICIAN';
-  const showWorkOrders = hasPermission('VIEW_WORK_ORDER') && !isTechnician;
-  const showTechnicianWorkspace = hasPermission('VIEW_WORK_ORDER') && isTechnician;
-  const showParts = hasPermission('VIEW_PART');
-  const showSlaPolicies = hasPermission('VIEW_SLA');
-  const showDashboard = hasPermission('VIEW_DASHBOARD');
-  const showReports = hasPermission('VIEW_REPORT');
+  const showWorkOrders = !isCustomer && hasPermission('VIEW_WORK_ORDER') && !isTechnician;
+  const showTechnicianWorkspace = !isCustomer && hasPermission('VIEW_WORK_ORDER') && isTechnician;
+  const showParts = !isCustomer && hasPermission('VIEW_PART');
+  const showSlaPolicies = !isCustomer && hasPermission('VIEW_SLA');
+  const showDashboard = !isCustomer && hasPermission('VIEW_DASHBOARD');
+  const showReports = !isCustomer && hasPermission('VIEW_REPORT');
+  const showServiceRequests = !isCustomer && hasPermission('VIEW_SERVICE_REQUEST');
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
 
   const handleLogout = async () => {
@@ -37,6 +56,130 @@ export const MainLayout: React.FC = () => {
       setLoggingOut(false);
     }
   };
+
+  const customerLinks = (
+    <>
+      <NavLink to="/customer" end className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Dashboard</span>
+        </span>
+      </NavLink>
+      <NavLink to="/customer/requests" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <Inbox className="w-4 h-4" />
+          <span>My Requests</span>
+        </span>
+      </NavLink>
+      <NavLink to="/customer/work-orders" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <ClipboardList className="w-4 h-4" />
+          <span>My Work Orders</span>
+        </span>
+      </NavLink>
+      <NavLink to="/customer/sites" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <Building2 className="w-4 h-4" />
+          <span>My Sites</span>
+        </span>
+      </NavLink>
+      <NavLink to="/customer/profile" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <UserRound className="w-4 h-4" />
+          <span>Profile</span>
+        </span>
+      </NavLink>
+      <NavLink to="/notifications" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <Bell className="w-4 h-4" />
+          <span>Notifications</span>
+        </span>
+      </NavLink>
+    </>
+  );
+
+  const internalLinks = (
+    <>
+      <NavLink to="/" end className={navLinkClass} onClick={() => setMobileOpen(false)}>
+        <span className="inline-flex items-center space-x-2">
+          <Home className="w-4 h-4" />
+          <span>Home</span>
+        </span>
+      </NavLink>
+      {showDashboard && (
+        <NavLink to="/dashboard" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Dashboard</span>
+          </span>
+        </NavLink>
+      )}
+      {showReports && (
+        <NavLink to="/reports" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <BarChart3 className="w-4 h-4" />
+            <span>Reports</span>
+          </span>
+        </NavLink>
+      )}
+      {showServiceRequests && (
+        <NavLink to="/service-requests" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Inbox className="w-4 h-4" />
+            <span>Requests</span>
+          </span>
+        </NavLink>
+      )}
+      {showCustomers && (
+        <NavLink to="/customers" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Users className="w-4 h-4" />
+            <span>Customers</span>
+          </span>
+        </NavLink>
+      )}
+      {showSites && (
+        <NavLink to="/sites" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Building2 className="w-4 h-4" />
+            <span>Sites</span>
+          </span>
+        </NavLink>
+      )}
+      {showWorkOrders && (
+        <NavLink to="/work-orders" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <ClipboardList className="w-4 h-4" />
+            <span>Work Orders</span>
+          </span>
+        </NavLink>
+      )}
+      {showTechnicianWorkspace && (
+        <NavLink to="/technician" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Wrench className="w-4 h-4" />
+            <span>Technician Workspace</span>
+          </span>
+        </NavLink>
+      )}
+      {showParts && (
+        <NavLink to="/parts" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Package className="w-4 h-4" />
+            <span>Parts</span>
+          </span>
+        </NavLink>
+      )}
+      {showSlaPolicies && (
+        <NavLink to="/sla-policies" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+          <span className="inline-flex items-center space-x-2">
+            <Timer className="w-4 h-4" />
+            <span>SLA</span>
+          </span>
+        </NavLink>
+      )}
+    </>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
@@ -50,83 +193,12 @@ export const MainLayout: React.FC = () => {
               <div>
                 <span className="font-bold text-lg tracking-wider text-white">KEYSTONE</span>
                 <span className="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                  FSM Platform
+                  {isCustomer ? 'Customer Portal' : 'FSM Platform'}
                 </span>
               </div>
             </div>
 
-            <nav className="hidden md:flex items-center space-x-2">
-              <NavLink to="/" end className={navLinkClass}>
-                <span className="inline-flex items-center space-x-2">
-                  <Home className="w-4 h-4" />
-                  <span>Home</span>
-                </span>
-              </NavLink>
-              {showDashboard && (
-                <NavLink to="/dashboard" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Dashboard</span>
-                  </span>
-                </NavLink>
-              )}
-              {showReports && (
-                <NavLink to="/reports" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Reports</span>
-                  </span>
-                </NavLink>
-              )}
-              {showCustomers && (
-                <NavLink to="/customers" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <Users className="w-4 h-4" />
-                    <span>Customers</span>
-                  </span>
-                </NavLink>
-              )}
-              {showSites && (
-                <NavLink to="/sites" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <Building2 className="w-4 h-4" />
-                    <span>Sites</span>
-                  </span>
-                </NavLink>
-              )}
-              {showWorkOrders && (
-                <NavLink to="/work-orders" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <ClipboardList className="w-4 h-4" />
-                    <span>Work Orders</span>
-                  </span>
-                </NavLink>
-              )}
-              {showTechnicianWorkspace && (
-                <NavLink to="/technician" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <Wrench className="w-4 h-4" />
-                    <span>Technician Workspace</span>
-                  </span>
-                </NavLink>
-              )}
-              {showParts && (
-                <NavLink to="/parts" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <Package className="w-4 h-4" />
-                    <span>Parts</span>
-                  </span>
-                </NavLink>
-              )}
-              {showSlaPolicies && (
-                <NavLink to="/sla-policies" className={navLinkClass}>
-                  <span className="inline-flex items-center space-x-2">
-                    <Timer className="w-4 h-4" />
-                    <span>SLA</span>
-                  </span>
-                </NavLink>
-              )}
-            </nav>
+            <nav className="hidden md:flex items-center space-x-2">{isCustomer ? customerLinks : internalLinks}</nav>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -157,49 +229,7 @@ export const MainLayout: React.FC = () => {
 
         {mobileOpen && (
           <nav className="md:hidden border-t border-slate-800 px-4 py-3 space-y-2">
-            <NavLink to="/" end className={navLinkClass} onClick={() => setMobileOpen(false)}>
-              Home
-            </NavLink>
-            {showDashboard && (
-              <NavLink to="/dashboard" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Dashboard
-              </NavLink>
-            )}
-            {showReports && (
-              <NavLink to="/reports" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Reports
-              </NavLink>
-            )}
-            {showCustomers && (
-              <NavLink to="/customers" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Customers
-              </NavLink>
-            )}
-            {showSites && (
-              <NavLink to="/sites" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Sites
-              </NavLink>
-            )}
-            {showWorkOrders && (
-              <NavLink to="/work-orders" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Work Orders
-              </NavLink>
-            )}
-            {showTechnicianWorkspace && (
-              <NavLink to="/technician" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Technician Workspace
-              </NavLink>
-            )}
-            {showParts && (
-              <NavLink to="/parts" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                Parts
-              </NavLink>
-            )}
-            {showSlaPolicies && (
-              <NavLink to="/sla-policies" className={navLinkClass} onClick={() => setMobileOpen(false)}>
-                SLA
-              </NavLink>
-            )}
+            {isCustomer ? customerLinks : internalLinks}
             <div className="pt-2 border-t border-slate-800">
               <p className="px-3 py-1 text-xs text-slate-400">{displayName || user?.userEmail}</p>
               <button

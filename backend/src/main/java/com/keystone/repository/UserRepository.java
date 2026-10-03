@@ -21,6 +21,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRoleAndEnabledOrderByFirstNameAscLastNameAsc(Role role, boolean enabled);
 
+    List<User> findByRoleAndEnabledAndCustomer_Id(Role role, boolean enabled, Long customerId);
+
+    Optional<User> findByRoleAndEnabledAndUserEmail(Role role, boolean enabled, String userEmail);
+
     long countByRoleAndEnabled(Role role, boolean enabled);
 
     @Query("SELECT u FROM User u WHERE " +

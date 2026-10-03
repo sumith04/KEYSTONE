@@ -25,4 +25,6 @@ public class UpdateUserRequest {
 
     @NotNull(message = "Enabled state is required")
     private Boolean enabled;
+
+    private Long customerId;
 }

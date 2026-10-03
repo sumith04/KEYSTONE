@@ -8,6 +8,15 @@ import { CustomerCreatePage } from '../pages/customers/CustomerCreatePage';
 import { CustomerDetailPage } from '../pages/customers/CustomerDetailPage';
 import { CustomerEditPage } from '../pages/customers/CustomerEditPage';
 import { CustomerListPage } from '../pages/customers/CustomerListPage';
+import { CustomerDashboardPage } from '../pages/customer/CustomerDashboardPage';
+import { CustomerProfilePage } from '../pages/customer/CustomerProfilePage';
+import { CustomerRequestDetailPage } from '../pages/customer/CustomerRequestDetailPage';
+import { CustomerRequestEditPage } from '../pages/customer/CustomerRequestEditPage';
+import { CustomerRequestNewPage } from '../pages/customer/CustomerRequestNewPage';
+import { CustomerRequestsPage } from '../pages/customer/CustomerRequestsPage';
+import { CustomerSitesPage } from '../pages/customer/CustomerSitesPage';
+import { CustomerWorkOrderDetailPage } from '../pages/customer/CustomerWorkOrderDetailPage';
+import { CustomerWorkOrdersPage } from '../pages/customer/CustomerWorkOrdersPage';
 import { HomePage } from '../pages/HomePage';
 import { SiteCreatePage } from '../pages/sites/SiteCreatePage';
 import { SiteDetailPage } from '../pages/sites/SiteDetailPage';
@@ -22,6 +31,8 @@ import { PartsPage } from '../pages/parts/PartsPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
+import { ServiceRequestDetailPage } from '../pages/service-requests/ServiceRequestDetailPage';
+import { ServiceRequestsPage } from '../pages/service-requests/ServiceRequestsPage';
 import { TechnicianWorkspacePage } from '../pages/technician/TechnicianWorkspacePage';
 import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
 import { WorkOrderDetailsPage } from '../pages/work-orders/WorkOrderDetailsPage';
@@ -98,6 +109,23 @@ export const AppRoutes: React.FC = () => {
           </Route>
           <Route element={<PermissionRoute requiredPermission="VIEW_SLA" />}>
             <Route path="sla-policies" element={<SlaPoliciesPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute requiredPermission="VIEW_SERVICE_REQUEST" />}>
+            <Route path="service-requests" element={<ServiceRequestsPage />} />
+            <Route path="service-requests/:id" element={<ServiceRequestDetailPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute requiredPermission="VIEW_OWN_REQUEST" />}>
+            <Route path="customer" element={<CustomerDashboardPage />} />
+            <Route path="customer/requests" element={<CustomerRequestsPage />} />
+            <Route path="customer/requests/new" element={<CustomerRequestNewPage />} />
+            <Route path="customer/requests/:id" element={<CustomerRequestDetailPage />} />
+            <Route path="customer/requests/:id/edit" element={<CustomerRequestEditPage />} />
+            <Route path="customer/work-orders" element={<CustomerWorkOrdersPage />} />
+            <Route path="customer/work-orders/:id" element={<CustomerWorkOrderDetailPage />} />
+            <Route path="customer/sites" element={<CustomerSitesPage />} />
+            <Route path="customer/profile" element={<CustomerProfilePage />} />
           </Route>
 
           <Route path="notifications" element={<NotificationsPage />} />

@@ -3,8 +3,10 @@ package com.keystone.service;
 import com.keystone.dto.NotificationPageResponse;
 import com.keystone.dto.NotificationResponse;
 import com.keystone.dto.UnreadCountResponse;
+import com.keystone.entity.Customer;
 import com.keystone.entity.Notification;
 import com.keystone.entity.Part;
+import com.keystone.entity.ServiceRequest;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
 import com.keystone.enums.NotificationType;
@@ -179,6 +181,91 @@ public class NotificationServiceImpl implements NotificationService {
                 );
             }
         }
+
+        for (User user : customerPortalUsers(workOrder.getCustomer())) {
+            createSafely(
+                    user.getId(),
+                    type,
+                    title,
+                    message,
+                    RelatedEntityType.WORK_ORDER,
+                    workOrder.getId()
+            );
+        }
+    }
+
+    @Override
+    public void notifyServiceRequestSubmitted(ServiceRequest request) {
+        if (request == null) {
+            return;
+        }
+        String number = requestNumber(request);
+        for (User user : operationalUsers()) {
+            createSafely(
+                    user.getId(),
+                    NotificationType.SERVICE_REQUEST_SUBMITTED,
+                    "New service request",
+                    "Service request " + number + " was submitted.",
+                    RelatedEntityType.SERVICE_REQUEST,
+                    request.getId()
+            );
+        }
+        for (User user : customerPortalUsers(request.getCustomer())) {
+            createSafely(
+                    user.getId(),
+                    NotificationType.SERVICE_REQUEST_SUBMITTED,
+                    "Service request received",
+                    "We received service request " + number + ".",
+                    RelatedEntityType.SERVICE_REQUEST,
+                    request.getId()
+            );
+        }
+    }
+
+    @Override
+    public void notifyServiceRequestUpdated(ServiceRequest request) {
+        if (request == null || request.getStatus() == null) {
+            return;
+        }
+        String number = requestNumber(request);
+        NotificationType type;
+        String title;
+        String message;
+        switch (request.getStatus()) {
+            case ACKNOWLEDGED -> {
+                type = NotificationType.SERVICE_REQUEST_ACKNOWLEDGED;
+                title = "Service request acknowledged";
+                message = "Service request " + number + " has been acknowledged.";
+            }
+            case CONVERTED_TO_WORK_ORDER -> {
+                type = NotificationType.SERVICE_REQUEST_CONVERTED;
+                title = "Service request converted";
+                String workOrderNumber = request.getWorkOrder() != null && request.getWorkOrder().getWorkOrderNumber() != null
+                        ? request.getWorkOrder().getWorkOrderNumber()
+                        : "a work order";
+                message = "Service request " + number + " was converted to " + workOrderNumber + ".";
+            }
+            case REJECTED -> {
+                type = NotificationType.SERVICE_REQUEST_REJECTED;
+                title = "Service request rejected";
+                message = "Service request " + number + " was rejected.";
+            }
+            default -> {
+                type = NotificationType.SERVICE_REQUEST;
+                title = "Service request updated";
+                message = "Service request " + number + " is now " + request.getStatus().name().replace('_', ' ') + ".";
+            }
+        }
+        for (User user : customerPortalUsers(request.getCustomer())) {
+            createSafely(
+                    user.getId(),
+                    type,
+                    title,
+                    message,
+                    RelatedEntityType.SERVICE_REQUEST,
+                    request.getId()
+            );
+        }
     }
 
     @Override
@@ -287,10 +374,32 @@ public class NotificationServiceImpl implements NotificationService {
         List<User> users = new ArrayList<>();
         users.addAll(userRepository.findByRoleAndEnabledOrderByFirstNameAscLastNameAsc(Role.ADMIN, true));
         users.addAll(userRepository.findByRoleAndEnabledOrderByFirstNameAscLastNameAsc(Role.MANAGER, true));
+        users.addAll(userRepository.findByRoleAndEnabledOrderByFirstNameAscLastNameAsc(Role.DISPATCHER, true));
+        return users;
+    }
+
+    private List<User> customerPortalUsers(Customer customer) {
+        if (customer == null || customer.getId() == null) {
+            return List.of();
+        }
+        List<User> users = new ArrayList<>(
+                userRepository.findByRoleAndEnabledAndCustomer_Id(Role.CUSTOMER, true, customer.getId()));
+        if (customer.getEmail() != null && !customer.getEmail().isBlank()) {
+            userRepository.findByRoleAndEnabledAndUserEmail(Role.CUSTOMER, true, customer.getEmail())
+                    .ifPresent(user -> {
+                        if (users.stream().noneMatch(existing -> existing.getId().equals(user.getId()))) {
+                            users.add(user);
+                        }
+                    });
+        }
         return users;
     }
 
     private String workOrderNumber(WorkOrder workOrder) {
         return workOrder.getWorkOrderNumber() != null ? workOrder.getWorkOrderNumber() : "a work order";
+    }
+
+    private String requestNumber(ServiceRequest request) {
+        return request.getRequestNumber() != null ? request.getRequestNumber() : "a service request";
     }
 }

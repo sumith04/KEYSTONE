@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { AlertBanner } from '../../components/AlertBanner';
 import { Pagination } from '../../components/Pagination';
+import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { getNotifications } from '../../services/api';
 import { Notification, NotificationPage } from '../../types';
@@ -13,6 +14,7 @@ type ReadFilter = 'all' | 'unread';
 
 export const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { unreadCount, markRead, markAllRead, refreshUnreadCount } = useNotifications();
   const [pageData, setPageData] = useState<NotificationPage | null>(null);
   const [page, setPage] = useState(0);
@@ -56,7 +58,7 @@ export const NotificationsPage: React.FC = () => {
     } catch {
       // Continue navigation even if the read update fails.
     }
-    const path = notificationPath(notification.relatedEntityType, notification.relatedEntityId);
+    const path = notificationPath(notification.relatedEntityType, notification.relatedEntityId, role);
     if (path) {
       navigate(path);
       return;

@@ -50,6 +50,9 @@ class RolePermissionMapperTest {
         assertTrue(managerPermissions.contains(Permission.DELETE_SLA));
         assertTrue(managerPermissions.contains(Permission.VIEW_DASHBOARD));
         assertTrue(managerPermissions.contains(Permission.VIEW_REPORT));
+        assertTrue(managerPermissions.contains(Permission.VIEW_SERVICE_REQUEST));
+        assertTrue(managerPermissions.contains(Permission.UPDATE_SERVICE_REQUEST));
+        assertTrue(managerPermissions.contains(Permission.CONVERT_SERVICE_REQUEST));
     }
 
     @Test
@@ -73,6 +76,8 @@ class RolePermissionMapperTest {
         assertFalse(dispatcherPermissions.contains(Permission.DELETE_SLA));
         assertTrue(dispatcherPermissions.contains(Permission.VIEW_DASHBOARD));
         assertFalse(dispatcherPermissions.contains(Permission.VIEW_REPORT));
+        assertTrue(dispatcherPermissions.contains(Permission.VIEW_SERVICE_REQUEST));
+        assertTrue(dispatcherPermissions.contains(Permission.CONVERT_SERVICE_REQUEST));
     }
 
     @Test
@@ -95,6 +100,8 @@ class RolePermissionMapperTest {
         assertFalse(techPermissions.contains(Permission.DELETE_SLA));
         assertFalse(techPermissions.contains(Permission.VIEW_DASHBOARD));
         assertFalse(techPermissions.contains(Permission.VIEW_REPORT));
+        assertFalse(techPermissions.contains(Permission.VIEW_SERVICE_REQUEST));
+        assertFalse(techPermissions.contains(Permission.CONVERT_SERVICE_REQUEST));
     }
 
     @Test
@@ -115,5 +122,8 @@ class RolePermissionMapperTest {
         assertFalse(customerPermissions.contains(Permission.DELETE_SITE));
         assertFalse(customerPermissions.contains(Permission.VIEW_DASHBOARD));
         assertFalse(customerPermissions.contains(Permission.VIEW_REPORT));
+        assertFalse(customerPermissions.contains(Permission.VIEW_WORK_ORDER));
+        assertFalse(customerPermissions.contains(Permission.VIEW_SERVICE_REQUEST));
+        assertFalse(customerPermissions.contains(Permission.CONVERT_SERVICE_REQUEST));
     }
 }

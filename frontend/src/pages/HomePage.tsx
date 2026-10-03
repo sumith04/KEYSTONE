@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { fetchSystemHealth, SystemHealthResponse } from '../services/api';
 import { CheckCircle2, AlertCircle, RefreshCw, Server, Database, Layers, ArrowRight } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 export const HomePage: React.FC = () => {
+  const { role } = useAuth();
   const [health, setHealth] = useState<SystemHealthResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +26,10 @@ export const HomePage: React.FC = () => {
   useEffect(() => {
     checkBackendHealth();
   }, []);
+
+  if (role === 'CUSTOMER') {
+    return <Navigate to="/customer" replace />;
+  }
 
   return (
     <div className="space-y-8">

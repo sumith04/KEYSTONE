@@ -4,6 +4,7 @@ import com.keystone.dto.NotificationPageResponse;
 import com.keystone.dto.NotificationResponse;
 import com.keystone.dto.UnreadCountResponse;
 import com.keystone.entity.Part;
+import com.keystone.entity.ServiceRequest;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
 import com.keystone.enums.NotificationType;
@@ -38,6 +39,10 @@ public interface NotificationService {
     void notifyWorkOrderAssigned(User technician, WorkOrder workOrder);
 
     void notifyWorkOrderStatusChanged(WorkOrder workOrder, WorkOrderStatus status);
+
+    void notifyServiceRequestSubmitted(ServiceRequest request);
+
+    void notifyServiceRequestUpdated(ServiceRequest request);
 
     void notifyLowStockIfNeeded(Part part);
 
