@@ -6,6 +6,7 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSummaryResponse;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.service.WorkOrderService;
@@ -38,10 +39,18 @@ public class WorkOrderController {
             @RequestParam(required = false) WorkOrderPriority priority,
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long siteId,
-            @RequestParam(required = false) Long technicianId) {
+            @RequestParam(required = false) Long technicianId,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         return ResponseEntity.ok(workOrderService.getWorkOrders(
-                page, size, sort, search, status, priority, customerId, siteId, technicianId));
+                page, size, sort, search, status, priority, customerId, siteId, technicianId, userDetails.getUsername()));
+    }
+
+    @GetMapping("/summary")
+    @PreAuthorize("@authorizationService.hasPermission(authentication, 'VIEW_WORK_ORDER')")
+    public ResponseEntity<WorkOrderSummaryResponse> getWorkOrderSummary(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.getWorkOrderSummary(userDetails.getUsername()));
     }
 
     @GetMapping("/technicians")
@@ -52,14 +61,18 @@ public class WorkOrderController {
 
     @GetMapping("/number/{workOrderNumber}")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'VIEW_WORK_ORDER')")
-    public ResponseEntity<WorkOrderResponse> getWorkOrderByNumber(@PathVariable String workOrderNumber) {
-        return ResponseEntity.ok(workOrderService.getWorkOrderByNumber(workOrderNumber));
+    public ResponseEntity<WorkOrderResponse> getWorkOrderByNumber(
+            @PathVariable String workOrderNumber,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.getWorkOrderByNumber(workOrderNumber, userDetails.getUsername()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'VIEW_WORK_ORDER')")
-    public ResponseEntity<WorkOrderResponse> getWorkOrderById(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.getWorkOrderById(id));
+    public ResponseEntity<WorkOrderResponse> getWorkOrderById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.getWorkOrderById(id, userDetails.getUsername()));
     }
 
     @PostMapping
@@ -75,14 +88,17 @@ public class WorkOrderController {
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'UPDATE_WORK_ORDER')")
     public ResponseEntity<WorkOrderResponse> updateWorkOrder(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateWorkOrderRequest request) {
-        return ResponseEntity.ok(workOrderService.updateWorkOrder(id, request));
+            @Valid @RequestBody UpdateWorkOrderRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.updateWorkOrder(id, request, userDetails.getUsername()));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'DELETE_WORK_ORDER')")
-    public ResponseEntity<Void> deleteWorkOrder(@PathVariable Long id) {
-        workOrderService.deleteWorkOrder(id);
+    public ResponseEntity<Void> deleteWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        workOrderService.deleteWorkOrder(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 
@@ -90,43 +106,56 @@ public class WorkOrderController {
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'ASSIGN_WORK_ORDER')")
     public ResponseEntity<WorkOrderResponse> assignWorkOrder(
             @PathVariable Long id,
-            @Valid @RequestBody AssignWorkOrderRequest request) {
-        return ResponseEntity.ok(workOrderService.assignWorkOrder(id, request));
+            @Valid @RequestBody AssignWorkOrderRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.assignWorkOrder(id, request, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/start")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'START_WORK')")
-    public ResponseEntity<WorkOrderResponse> startWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.startWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> startWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.startWorkOrder(id, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/hold")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'HOLD_WORK')")
-    public ResponseEntity<WorkOrderResponse> holdWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.holdWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> holdWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.holdWorkOrder(id, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/resume")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'RESUME_WORK')")
-    public ResponseEntity<WorkOrderResponse> resumeWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.resumeWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> resumeWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.resumeWorkOrder(id, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/complete")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'COMPLETE_WORK')")
-    public ResponseEntity<WorkOrderResponse> completeWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.completeWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> completeWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.completeWorkOrder(id, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/close")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'CLOSE_WORK_ORDER')")
-    public ResponseEntity<WorkOrderResponse> closeWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.closeWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> closeWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.closeWorkOrder(id, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("@authorizationService.hasPermission(authentication, 'CANCEL_WORK_ORDER')")
-    public ResponseEntity<WorkOrderResponse> cancelWorkOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(workOrderService.cancelWorkOrder(id));
+    public ResponseEntity<WorkOrderResponse> cancelWorkOrder(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(workOrderService.cancelWorkOrder(id, userDetails.getUsername()));
     }
 }

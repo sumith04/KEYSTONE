@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AlertBanner } from '../../components/AlertBanner';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useAuth } from '../../hooks/useAuth';
 import { usePermissions } from '../../hooks/usePermissions';
 import {
   assignWorkOrder,
@@ -27,6 +28,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { role } = useAuth();
   const { hasPermission } = usePermissions();
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [technicians, setTechnicians] = useState<AuthUser[]>([]);
@@ -40,6 +42,8 @@ export const WorkOrderDetailsPage: React.FC = () => {
   const [pendingDelete, setPendingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<'start' | 'hold' | 'resume' | 'complete' | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const workOrderId = Number(id);
 
@@ -83,15 +87,45 @@ export const WorkOrderDetailsPage: React.FC = () => {
   const runAction = async (action: () => Promise<WorkOrder>, successMessage: string) => {
     setActionBusy(true);
     setError(null);
+    setActionError(null);
     try {
       const updated = await action();
       setWorkOrder(updated);
       setSuccess(successMessage);
+      setPendingAction(null);
     } catch (err) {
-      setError(getApiError(err).message || 'Unable to update work order');
+      const message = getApiError(err).message || 'Unable to update work order';
+      setError(message);
+      setActionError(message);
     } finally {
       setActionBusy(false);
     }
+  };
+
+  const confirmAction = async () => {
+    if (!workOrder || !pendingAction || actionBusy) {
+      return;
+    }
+    const actions = {
+      start: {
+        run: () => startWorkOrder(workOrder.id),
+        success: 'Work started.',
+      },
+      hold: {
+        run: () => holdWorkOrder(workOrder.id),
+        success: 'Work placed on hold.',
+      },
+      resume: {
+        run: () => resumeWorkOrder(workOrder.id),
+        success: 'Work resumed.',
+      },
+      complete: {
+        run: () => completeWorkOrder(workOrder.id),
+        success: 'Work order marked as completed.',
+      },
+    };
+    const selected = actions[pendingAction];
+    await runAction(selected.run, selected.success);
   };
 
   const handleAssign = async () => {
@@ -113,7 +147,9 @@ export const WorkOrderDetailsPage: React.FC = () => {
     setDeleteError(null);
     try {
       await deleteWorkOrder(workOrder.id);
-      navigate('/work-orders', { state: { success: `Work order ${workOrder.workOrderNumber} was deleted.` } });
+      navigate(role === 'TECHNICIAN' ? '/technician' : '/work-orders', {
+        state: { success: `Work order ${workOrder.workOrderNumber} was deleted.` },
+      });
     } catch (err) {
       setDeleteError(getApiError(err).message || 'Unable to delete work order');
     } finally {
@@ -153,7 +189,10 @@ export const WorkOrderDetailsPage: React.FC = () => {
           <p className="text-sm text-slate-400">{workOrder.title}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/work-orders" className="px-3 py-2 text-sm rounded-lg border border-slate-700 hover:bg-slate-800">
+          <Link
+            to={role === 'TECHNICIAN' ? '/technician' : '/work-orders'}
+            className="px-3 py-2 text-sm rounded-lg border border-slate-700 hover:bg-slate-800"
+          >
             Back to list
           </Link>
           {canEdit && (
@@ -231,30 +270,42 @@ export const WorkOrderDetailsPage: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             {canStart && (
               <ActionButton
-                label="Start"
+                label="Start Work"
                 busy={actionBusy}
-                onClick={() => runAction(() => startWorkOrder(workOrder.id), 'Work started.')}
+                onClick={() => {
+                  setActionError(null);
+                  setPendingAction('start');
+                }}
               />
             )}
             {canHold && (
               <ActionButton
-                label="Hold"
+                label="Hold Work"
                 busy={actionBusy}
-                onClick={() => runAction(() => holdWorkOrder(workOrder.id), 'Work placed on hold.')}
+                onClick={() => {
+                  setActionError(null);
+                  setPendingAction('hold');
+                }}
               />
             )}
             {canResume && (
               <ActionButton
-                label="Resume"
+                label="Resume Work"
                 busy={actionBusy}
-                onClick={() => runAction(() => resumeWorkOrder(workOrder.id), 'Work resumed.')}
+                onClick={() => {
+                  setActionError(null);
+                  setPendingAction('resume');
+                }}
               />
             )}
             {canComplete && (
               <ActionButton
-                label="Complete"
+                label="Complete Work"
                 busy={actionBusy}
-                onClick={() => runAction(() => completeWorkOrder(workOrder.id), 'Work completed.')}
+                onClick={() => {
+                  setActionError(null);
+                  setPendingAction('complete');
+                }}
               />
             )}
             {canClose && (
@@ -284,6 +335,45 @@ export const WorkOrderDetailsPage: React.FC = () => {
         error={deleteError}
         onCancel={() => setPendingDelete(false)}
         onConfirm={handleDelete}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingAction)}
+        title={
+          pendingAction === 'start'
+            ? 'Start work'
+            : pendingAction === 'hold'
+              ? 'Hold work'
+              : pendingAction === 'resume'
+                ? 'Resume work'
+                : 'Complete work'
+        }
+        message={
+          pendingAction === 'start'
+            ? 'Start this work order?'
+            : pendingAction === 'hold'
+              ? 'Put this work order on hold?'
+              : pendingAction === 'resume'
+                ? 'Resume this work order?'
+                : 'Mark this work order as completed?'
+        }
+        confirmLabel={
+          pendingAction === 'start'
+            ? 'Start'
+            : pendingAction === 'hold'
+              ? 'Hold'
+              : pendingAction === 'resume'
+                ? 'Resume'
+                : 'Complete'
+        }
+        busy={actionBusy}
+        error={actionError}
+        onCancel={() => {
+          if (!actionBusy) {
+            setPendingAction(null);
+            setActionError(null);
+          }
+        }}
+        onConfirm={confirmAction}
       />
     </div>
   );

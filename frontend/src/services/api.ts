@@ -21,6 +21,7 @@ import {
   WorkOrder,
   WorkOrderListQueryParams,
   WorkOrderPageResponse,
+  WorkOrderSummary,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -201,6 +202,11 @@ export const deleteSite = async (id: number): Promise<void> => {
 
 export const getWorkOrders = async (params: WorkOrderListQueryParams = {}): Promise<WorkOrderPageResponse> => {
   const response = await apiClient.get<WorkOrderPageResponse>('/work-orders', { params: toListParams(params) });
+  return response.data;
+};
+
+export const getWorkOrderSummary = async (): Promise<WorkOrderSummary> => {
+  const response = await apiClient.get<WorkOrderSummary>('/work-orders/summary');
   return response.data;
 };
 

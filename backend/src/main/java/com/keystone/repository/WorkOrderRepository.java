@@ -38,6 +38,10 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
            "(:customerId IS NULL OR w.customer.id = :customerId) AND " +
            "(:siteId IS NULL OR w.site.id = :siteId) AND " +
            "(:technicianId IS NULL OR w.assignedTechnician.id = :technicianId)")
+    long countByAssignedTechnicianIdAndStatus(Long technicianId, WorkOrderStatus status);
+
+    long countByStatus(WorkOrderStatus status);
+
     Page<WorkOrder> searchWorkOrders(
             @Param("search") String search,
             @Param("status") WorkOrderStatus status,

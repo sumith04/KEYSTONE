@@ -68,6 +68,8 @@ class WorkOrderServiceTest {
     private User disabledTechnician;
     private WorkOrder workOrder;
 
+    private static final String DISPATCHER_EMAIL = "dispatcher@keystone.com";
+
     @BeforeEach
     void setUp() {
         customer = Customer.builder()
@@ -137,6 +139,8 @@ class WorkOrderServiceTest {
                 .build();
 
         workOrder = baseWorkOrder(WorkOrderStatus.NEW);
+
+        lenient().when(userRepository.findByUserEmail(DISPATCHER_EMAIL)).thenReturn(Optional.of(creator));
     }
 
     @Test
@@ -221,7 +225,7 @@ class WorkOrderServiceTest {
     void getWorkOrderById_WhenExists_ShouldReturnWorkOrder() {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        WorkOrderResponse response = workOrderService.getWorkOrderById(7L);
+        WorkOrderResponse response = workOrderService.getWorkOrderById(7L, DISPATCHER_EMAIL);
 
         assertEquals(7L, response.getId());
         assertEquals("WO-000007", response.getWorkOrderNumber());
@@ -233,14 +237,14 @@ class WorkOrderServiceTest {
     void getWorkOrderById_WhenMissing_ShouldThrowNotFound() {
         when(workOrderRepository.findByIdWithRelations(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> workOrderService.getWorkOrderById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> workOrderService.getWorkOrderById(99L, DISPATCHER_EMAIL));
     }
 
     @Test
     void getWorkOrderByNumber_WhenExists_ShouldReturnWorkOrder() {
         when(workOrderRepository.findByWorkOrderNumberWithRelations("WO-000007")).thenReturn(Optional.of(workOrder));
 
-        WorkOrderResponse response = workOrderService.getWorkOrderByNumber("wo-000007");
+        WorkOrderResponse response = workOrderService.getWorkOrderByNumber("wo-000007", DISPATCHER_EMAIL);
 
         assertEquals("WO-000007", response.getWorkOrderNumber());
     }
@@ -252,7 +256,7 @@ class WorkOrderServiceTest {
                 .thenReturn(new PageImpl<>(List.of(workOrder)));
 
         WorkOrderPageResponse response = workOrderService.getWorkOrders(
-                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, null);
+                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, null, DISPATCHER_EMAIL);
 
         assertEquals(1, response.getContent().size());
         assertEquals(1, response.getTotalElements());
@@ -273,7 +277,7 @@ class WorkOrderServiceTest {
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(siteRepository.findByIdWithCustomer(11L)).thenReturn(Optional.of(otherSite));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.updateWorkOrder(7L, request));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.updateWorkOrder(7L, request, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
     }
 
@@ -290,7 +294,7 @@ class WorkOrderServiceTest {
 
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.updateWorkOrder(7L, request));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.updateWorkOrder(7L, request, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         verify(workOrderRepository, never()).save(any());
     }
@@ -301,7 +305,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(200L)).thenReturn(Optional.of(technician));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        WorkOrderResponse response = workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(200L).build());
+        WorkOrderResponse response = workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(200L).build(), DISPATCHER_EMAIL);
 
         assertEquals(WorkOrderStatus.ASSIGNED, workOrder.getStatus());
         assertEquals(technician, workOrder.getAssignedTechnician());
@@ -325,7 +329,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(203L)).thenReturn(Optional.of(otherTech));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        WorkOrderResponse response = workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(203L).build());
+        WorkOrderResponse response = workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(203L).build(), DISPATCHER_EMAIL);
 
         assertEquals(WorkOrderStatus.ASSIGNED, response.getStatus());
         assertEquals(203L, response.getAssignedTechnicianId());
@@ -337,7 +341,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(201L)).thenReturn(Optional.of(manager));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(201L).build()));
+                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(201L).build(), DISPATCHER_EMAIL));
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
         assertTrue(exception.getMessage().contains("TECHNICIAN"));
     }
@@ -348,7 +352,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(202L)).thenReturn(Optional.of(disabledTechnician));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(202L).build()));
+                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(202L).build(), DISPATCHER_EMAIL));
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
         assertTrue(exception.getMessage().contains("inactive"));
     }
@@ -359,7 +363,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(999L).build()));
+                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(999L).build(), DISPATCHER_EMAIL));
     }
 
     @Test
@@ -369,7 +373,7 @@ class WorkOrderServiceTest {
         when(userRepository.findById(200L)).thenReturn(Optional.of(technician));
 
         ApiException exception = assertThrows(ApiException.class,
-                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(200L).build()));
+                () -> workOrderService.assignWorkOrder(7L, AssignWorkOrderRequest.builder().technicianId(200L).build(), DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     }
 
@@ -380,7 +384,7 @@ class WorkOrderServiceTest {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        WorkOrderResponse response = workOrderService.startWorkOrder(7L);
+        WorkOrderResponse response = workOrderService.startWorkOrder(7L, DISPATCHER_EMAIL);
 
         assertEquals(WorkOrderStatus.IN_PROGRESS, response.getStatus());
         assertNotNull(workOrder.getActualStart());
@@ -395,7 +399,7 @@ class WorkOrderServiceTest {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        workOrderService.startWorkOrder(7L);
+        workOrderService.startWorkOrder(7L, DISPATCHER_EMAIL);
 
         assertEquals(originalStart, workOrder.getActualStart());
     }
@@ -407,11 +411,11 @@ class WorkOrderServiceTest {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertEquals(WorkOrderStatus.ON_HOLD, workOrderService.holdWorkOrder(7L).getStatus());
-        assertEquals(WorkOrderStatus.IN_PROGRESS, workOrderService.resumeWorkOrder(7L).getStatus());
-        assertEquals(WorkOrderStatus.COMPLETED, workOrderService.completeWorkOrder(7L).getStatus());
+        assertEquals(WorkOrderStatus.ON_HOLD, workOrderService.holdWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
+        assertEquals(WorkOrderStatus.IN_PROGRESS, workOrderService.resumeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
+        assertEquals(WorkOrderStatus.COMPLETED, workOrderService.completeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
         assertNotNull(workOrder.getActualEnd());
-        assertEquals(WorkOrderStatus.CLOSED, workOrderService.closeWorkOrder(7L).getStatus());
+        assertEquals(WorkOrderStatus.CLOSED, workOrderService.closeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
     }
 
     @Test
@@ -419,7 +423,7 @@ class WorkOrderServiceTest {
         workOrder.setStatus(WorkOrderStatus.ASSIGNED);
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.completeWorkOrder(7L));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.completeWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         assertTrue(exception.getMessage().contains("ASSIGNED to COMPLETED"));
     }
@@ -429,7 +433,7 @@ class WorkOrderServiceTest {
         workOrder.setStatus(WorkOrderStatus.IN_PROGRESS);
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.closeWorkOrder(7L));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.closeWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     }
 
@@ -438,7 +442,7 @@ class WorkOrderServiceTest {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
         when(workOrderRepository.save(any(WorkOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertEquals(WorkOrderStatus.CANCELLED, workOrderService.cancelWorkOrder(7L).getStatus());
+        assertEquals(WorkOrderStatus.CANCELLED, workOrderService.cancelWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
     }
 
     @Test
@@ -446,7 +450,7 @@ class WorkOrderServiceTest {
         workOrder.setStatus(WorkOrderStatus.COMPLETED);
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.cancelWorkOrder(7L));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.cancelWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     }
 
@@ -462,7 +466,7 @@ class WorkOrderServiceTest {
     void deleteWorkOrder_WhenNew_ShouldDelete() {
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        workOrderService.deleteWorkOrder(7L);
+        workOrderService.deleteWorkOrder(7L, DISPATCHER_EMAIL);
 
         verify(workOrderRepository).delete(workOrder);
     }
@@ -472,7 +476,7 @@ class WorkOrderServiceTest {
         workOrder.setStatus(WorkOrderStatus.COMPLETED);
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.deleteWorkOrder(7L));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.deleteWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         verify(workOrderRepository, never()).delete(any());
     }
@@ -482,7 +486,7 @@ class WorkOrderServiceTest {
         workOrder.setStatus(WorkOrderStatus.CLOSED);
         when(workOrderRepository.findByIdWithRelations(7L)).thenReturn(Optional.of(workOrder));
 
-        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.deleteWorkOrder(7L));
+        ApiException exception = assertThrows(ApiException.class, () -> workOrderService.deleteWorkOrder(7L, DISPATCHER_EMAIL));
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         verify(workOrderRepository, never()).delete(any());
     }

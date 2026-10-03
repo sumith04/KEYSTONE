@@ -6,6 +6,7 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSummaryResponse;
 import com.keystone.entity.Customer;
 import com.keystone.entity.Site;
 import com.keystone.entity.User;
@@ -77,11 +78,15 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             WorkOrderPriority priority,
             Long customerId,
             Long siteId,
-            Long technicianId) {
+            Long technicianId,
+            String currentUsername) {
+
+        User currentUser = findCurrentUser(currentUsername);
+        Long scopedTechnicianId = resolveScopedTechnicianId(currentUser, technicianId);
 
         Pageable pageable = buildPageable(page, size, sort);
         Page<WorkOrder> workOrderPage = workOrderRepository.searchWorkOrders(
-                normalizeSearch(search), status, priority, customerId, siteId, technicianId, pageable);
+                normalizeSearch(search), status, priority, customerId, siteId, scopedTechnicianId, pageable);
 
         List<WorkOrderResponse> content = workOrderPage.getContent()
                 .stream()
@@ -99,16 +104,39 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public WorkOrderResponse getWorkOrderById(Long id) {
-        return WorkOrderResponse.fromEntity(findWorkOrder(id));
+    public WorkOrderSummaryResponse getWorkOrderSummary(String currentUsername) {
+        User currentUser = findCurrentUser(currentUsername);
+        if (isTechnician(currentUser)) {
+            Long technicianId = currentUser.getId();
+            return WorkOrderSummaryResponse.builder()
+                    .assigned(workOrderRepository.countByAssignedTechnicianIdAndStatus(technicianId, WorkOrderStatus.ASSIGNED))
+                    .inProgress(workOrderRepository.countByAssignedTechnicianIdAndStatus(technicianId, WorkOrderStatus.IN_PROGRESS))
+                    .onHold(workOrderRepository.countByAssignedTechnicianIdAndStatus(technicianId, WorkOrderStatus.ON_HOLD))
+                    .completed(workOrderRepository.countByAssignedTechnicianIdAndStatus(technicianId, WorkOrderStatus.COMPLETED))
+                    .build();
+        }
+
+        return WorkOrderSummaryResponse.builder()
+                .assigned(workOrderRepository.countByStatus(WorkOrderStatus.ASSIGNED))
+                .inProgress(workOrderRepository.countByStatus(WorkOrderStatus.IN_PROGRESS))
+                .onHold(workOrderRepository.countByStatus(WorkOrderStatus.ON_HOLD))
+                .completed(workOrderRepository.countByStatus(WorkOrderStatus.COMPLETED))
+                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public WorkOrderResponse getWorkOrderByNumber(String workOrderNumber) {
+    public WorkOrderResponse getWorkOrderById(Long id, String currentUsername) {
+        return WorkOrderResponse.fromEntity(findAccessibleWorkOrder(id, currentUsername));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkOrderResponse getWorkOrderByNumber(String workOrderNumber, String currentUsername) {
         String normalized = workOrderNumber == null ? null : workOrderNumber.trim().toUpperCase();
         WorkOrder workOrder = workOrderRepository.findByWorkOrderNumberWithRelations(normalized)
                 .orElseThrow(() -> new ResourceNotFoundException("Work order not found with number: " + workOrderNumber));
+        assertTechnicianOwnsWorkOrder(workOrder, currentUsername, "Work order not found with number: " + workOrderNumber);
         return WorkOrderResponse.fromEntity(workOrder);
     }
 
@@ -145,8 +173,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse updateWorkOrder(Long id, UpdateWorkOrderRequest request) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse updateWorkOrder(Long id, UpdateWorkOrderRequest request, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         assertEditable(workOrder);
         validateSchedule(request.getScheduledStart(), request.getScheduledEnd());
 
@@ -170,8 +198,12 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse assignWorkOrder(Long id, AssignWorkOrderRequest request) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse assignWorkOrder(Long id, AssignWorkOrderRequest request, String currentUsername) {
+        User currentUser = findCurrentUser(currentUsername);
+        if (isTechnician(currentUser)) {
+            throw new ApiException("Technicians are not permitted to assign work orders.", HttpStatus.FORBIDDEN);
+        }
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         User technician = findAssignableTechnician(request.getTechnicianId());
 
         if (workOrder.getStatus() == WorkOrderStatus.NEW) {
@@ -190,8 +222,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse startWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse startWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         if (workOrder.getAssignedTechnician() == null) {
             throw new ApiException("Work order must be assigned before it can be started.", HttpStatus.CONFLICT);
         }
@@ -205,8 +237,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse holdWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse holdWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.ON_HOLD);
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
@@ -214,8 +246,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse resumeWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse resumeWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.IN_PROGRESS);
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
@@ -223,18 +255,20 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse completeWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse completeWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.COMPLETED);
-        workOrder.setActualEnd(LocalDateTime.now());
+        if (workOrder.getActualEnd() == null) {
+            workOrder.setActualEnd(LocalDateTime.now());
+        }
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
     }
 
     @Override
     @Transactional
-    public WorkOrderResponse closeWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse closeWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.CLOSED);
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
@@ -242,8 +276,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public WorkOrderResponse cancelWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public WorkOrderResponse cancelWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         transitionTo(workOrder, WorkOrderStatus.CANCELLED);
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
@@ -251,8 +285,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     @Transactional
-    public void deleteWorkOrder(Long id) {
-        WorkOrder workOrder = findWorkOrder(id);
+    public void deleteWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findAccessibleWorkOrder(id, currentUsername);
         if (NON_DELETABLE_STATUSES.contains(workOrder.getStatus())) {
             throw new ApiException(
                     "Completed or closed work orders cannot be deleted.",
@@ -327,6 +361,35 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             throw new ApiException("The selected technician is inactive and cannot be assigned.", HttpStatus.BAD_REQUEST);
         }
         return user;
+    }
+
+    private WorkOrder findAccessibleWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = findWorkOrder(id);
+        assertTechnicianOwnsWorkOrder(workOrder, currentUsername, "Work order not found with id: " + id);
+        return workOrder;
+    }
+
+    private void assertTechnicianOwnsWorkOrder(WorkOrder workOrder, String currentUsername, String notFoundMessage) {
+        User currentUser = findCurrentUser(currentUsername);
+        if (!isTechnician(currentUser)) {
+            return;
+        }
+
+        User assignedTechnician = workOrder.getAssignedTechnician();
+        if (assignedTechnician == null || !currentUser.getId().equals(assignedTechnician.getId())) {
+            throw new ResourceNotFoundException(notFoundMessage);
+        }
+    }
+
+    private Long resolveScopedTechnicianId(User currentUser, Long requestedTechnicianId) {
+        if (isTechnician(currentUser)) {
+            return currentUser.getId();
+        }
+        return requestedTechnicianId;
+    }
+
+    private boolean isTechnician(User user) {
+        return user != null && user.getRole() == Role.TECHNICIAN;
     }
 
     private WorkOrder findWorkOrder(Long id) {

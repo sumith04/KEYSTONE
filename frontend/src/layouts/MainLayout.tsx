@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Building2, ClipboardList, Home, LogOut, Menu, Shield, Users, X } from 'lucide-react';
+import { Building2, ClipboardList, Home, LogOut, Menu, Shield, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -19,7 +19,9 @@ export const MainLayout: React.FC = () => {
 
   const showCustomers = hasPermission('VIEW_CUSTOMER');
   const showSites = hasPermission('VIEW_SITE');
-  const showWorkOrders = hasPermission('VIEW_WORK_ORDER');
+  const isTechnician = role === 'TECHNICIAN';
+  const showWorkOrders = hasPermission('VIEW_WORK_ORDER') && !isTechnician;
+  const showTechnicianWorkspace = hasPermission('VIEW_WORK_ORDER') && isTechnician;
   const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : '';
 
   const handleLogout = async () => {
@@ -79,6 +81,14 @@ export const MainLayout: React.FC = () => {
                   </span>
                 </NavLink>
               )}
+              {showTechnicianWorkspace && (
+                <NavLink to="/technician" className={navLinkClass}>
+                  <span className="inline-flex items-center space-x-2">
+                    <Wrench className="w-4 h-4" />
+                    <span>Technician Workspace</span>
+                  </span>
+                </NavLink>
+              )}
             </nav>
           </div>
 
@@ -125,6 +135,11 @@ export const MainLayout: React.FC = () => {
             {showWorkOrders && (
               <NavLink to="/work-orders" className={navLinkClass} onClick={() => setMobileOpen(false)}>
                 Work Orders
+              </NavLink>
+            )}
+            {showTechnicianWorkspace && (
+              <NavLink to="/technician" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+                Technician Workspace
               </NavLink>
             )}
             <div className="pt-2 border-t border-slate-800">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { Plus, Search } from 'lucide-react';
 import { AlertBanner } from '../../components/AlertBanner';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -15,6 +16,7 @@ const deletableStatuses: WorkOrderStatus[] = ['NEW', 'ASSIGNED', 'IN_PROGRESS', 
 
 export const WorkOrdersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { hasPermission } = usePermissions();
   const [pageData, setPageData] = useState<WorkOrderPageResponse | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -62,9 +64,12 @@ export const WorkOrdersPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (role === 'TECHNICIAN') {
+      return;
+    }
     loadWorkOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, status, priority, customerId, technicianId]);
+  }, [page, search, status, priority, customerId, technicianId, role]);
 
   useEffect(() => {
     if (canViewCustomers) {
@@ -102,6 +107,10 @@ export const WorkOrdersPage: React.FC = () => {
       setDeleting(false);
     }
   };
+
+  if (role === 'TECHNICIAN') {
+    return <Navigate to="/technician" replace />;
+  }
 
   return (
     <div className="space-y-6">

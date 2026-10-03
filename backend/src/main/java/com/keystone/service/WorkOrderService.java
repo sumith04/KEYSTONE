@@ -6,6 +6,7 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSummaryResponse;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 
@@ -22,32 +23,35 @@ public interface WorkOrderService {
             WorkOrderPriority priority,
             Long customerId,
             Long siteId,
-            Long technicianId
+            Long technicianId,
+            String currentUsername
     );
 
-    WorkOrderResponse getWorkOrderById(Long id);
+    WorkOrderSummaryResponse getWorkOrderSummary(String currentUsername);
 
-    WorkOrderResponse getWorkOrderByNumber(String workOrderNumber);
+    WorkOrderResponse getWorkOrderById(Long id, String currentUsername);
+
+    WorkOrderResponse getWorkOrderByNumber(String workOrderNumber, String currentUsername);
 
     WorkOrderResponse createWorkOrder(CreateWorkOrderRequest request, String currentUsername);
 
-    WorkOrderResponse updateWorkOrder(Long id, UpdateWorkOrderRequest request);
+    WorkOrderResponse updateWorkOrder(Long id, UpdateWorkOrderRequest request, String currentUsername);
 
-    WorkOrderResponse assignWorkOrder(Long id, AssignWorkOrderRequest request);
+    WorkOrderResponse assignWorkOrder(Long id, AssignWorkOrderRequest request, String currentUsername);
 
-    WorkOrderResponse startWorkOrder(Long id);
+    WorkOrderResponse startWorkOrder(Long id, String currentUsername);
 
-    WorkOrderResponse holdWorkOrder(Long id);
+    WorkOrderResponse holdWorkOrder(Long id, String currentUsername);
 
-    WorkOrderResponse resumeWorkOrder(Long id);
+    WorkOrderResponse resumeWorkOrder(Long id, String currentUsername);
 
-    WorkOrderResponse completeWorkOrder(Long id);
+    WorkOrderResponse completeWorkOrder(Long id, String currentUsername);
 
-    WorkOrderResponse closeWorkOrder(Long id);
+    WorkOrderResponse closeWorkOrder(Long id, String currentUsername);
 
-    WorkOrderResponse cancelWorkOrder(Long id);
+    WorkOrderResponse cancelWorkOrder(Long id, String currentUsername);
 
-    void deleteWorkOrder(Long id);
+    void deleteWorkOrder(Long id, String currentUsername);
 
     List<UserResponse> getAssignableTechnicians();
 }
