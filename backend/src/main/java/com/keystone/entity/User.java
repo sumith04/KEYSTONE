@@ -38,6 +38,10 @@ public class User {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
     @Builder.Default
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;

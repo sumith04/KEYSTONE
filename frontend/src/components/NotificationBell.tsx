@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { RelatedEntityType } from '../types';
 import { formatRelativeTime, notificationPath, notificationTypeLabel } from '../utils/notifications';
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const {
     unreadCount,
     recentNotifications,
@@ -44,7 +46,7 @@ export const NotificationBell: React.FC = () => {
     } catch {
       // Navigation should still proceed for a reachable related record.
     }
-    const path = notificationPath(relatedEntityType, relatedEntityId);
+    const path = notificationPath(relatedEntityType, relatedEntityId, role);
     setOpen(false);
     if (path) {
       navigate(path);

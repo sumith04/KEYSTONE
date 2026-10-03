@@ -573,10 +573,144 @@ export type NotificationType =
   | 'SLA_AT_RISK'
   | 'SLA_BREACHED'
   | 'SERVICE_REQUEST'
+  | 'SERVICE_REQUEST_SUBMITTED'
+  | 'SERVICE_REQUEST_ACKNOWLEDGED'
+  | 'SERVICE_REQUEST_CONVERTED'
+  | 'SERVICE_REQUEST_REJECTED'
   | 'PART_LOW_STOCK'
   | 'GENERAL';
 
-export type RelatedEntityType = 'WORK_ORDER' | 'PART';
+export type RelatedEntityType = 'WORK_ORDER' | 'PART' | 'SERVICE_REQUEST';
+
+export type ServiceRequestStatus =
+  | 'SUBMITTED'
+  | 'ACKNOWLEDGED'
+  | 'IN_REVIEW'
+  | 'CONVERTED_TO_WORK_ORDER'
+  | 'CANCELLED'
+  | 'REJECTED';
+
+export interface ServiceRequest {
+  id: number;
+  requestNumber: string;
+  customerId: number;
+  customerCode: string | null;
+  customerName: string | null;
+  siteId: number;
+  siteCode: string | null;
+  siteName: string | null;
+  title: string;
+  description: string;
+  priority: WorkOrderPriority;
+  status: ServiceRequestStatus;
+  requestedAt: string;
+  preferredDate: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  workOrderId: number | null;
+  workOrderNumber: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceRequestPage {
+  content: ServiceRequest[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ServiceRequestListQueryParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: ServiceRequestStatus | '';
+  sort?: string;
+  priority?: WorkOrderPriority | '';
+  customerId?: number;
+}
+
+export interface CreateServiceRequest {
+  siteId: number;
+  title: string;
+  description: string;
+  priority: WorkOrderPriority;
+  preferredDate?: string | null;
+  contactName?: string;
+  contactPhone?: string;
+}
+
+export interface UpdateServiceRequest extends CreateServiceRequest {}
+
+export interface CustomerProfile {
+  id: number;
+  customerCode: string;
+  companyName: string;
+  contactFirstName: string | null;
+  contactLastName: string | null;
+  email: string | null;
+  phone: string | null;
+  alternatePhone: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+  status: CustomerStatus;
+}
+
+export interface CustomerPortalSummary {
+  submittedRequests: number;
+  openRequests: number;
+  activeWorkOrders: number;
+  completedWorkOrders: number;
+  slaWarnings: number;
+}
+
+export interface CustomerWorkOrder {
+  id: number;
+  workOrderNumber: string;
+  title: string;
+  description: string | null;
+  siteId: number | null;
+  siteCode: string | null;
+  siteName: string | null;
+  assignedTechnicianName: string | null;
+  status: WorkOrderStatus;
+  priority: WorkOrderPriority;
+  workType: WorkType;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  actualStart: string | null;
+  actualEnd: string | null;
+  slaStatus: SlaStatus | null;
+  responseDueAt: string | null;
+  responseAt: string | null;
+  resolutionDueAt: string | null;
+  resolvedAt: string | null;
+  serviceRequestId: number | null;
+  serviceRequestNumber: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerWorkOrderPage {
+  content: CustomerWorkOrder[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface CustomerWorkOrderListQueryParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: WorkOrderStatus | '';
+  sort?: string;
+}
 
 export interface Notification {
   id: number;

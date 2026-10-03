@@ -34,6 +34,9 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private com.keystone.repository.CustomerRepository customerRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks

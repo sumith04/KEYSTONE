@@ -161,5 +161,37 @@ The platform is intentionally structured to cleanly receive the following future
 - [ ] **SLA Monitoring & Compliance**
 - [x] **In-app Notifications** (persisted inbox, ownership isolation)
 - [x] **Real-Time Notifications & WebSockets** (STOMP over SockJS; JWT CONNECT)
-- [ ] **Analytical Dashboards & Reports**
-- [ ] **Customer Self-Service Portal**
+- [x] **Analytical Dashboards & Reports**
+- [x] **Customer Self-Service Portal**
+
+---
+
+## Customer Self-Service Portal
+
+CUSTOMER users are scoped to their own customer record via JWT identity (`User.customer`, with email fallback). Request bodies and query parameters never override ownership.
+
+### Lifecycle
+
+`SUBMITTED` → `ACKNOWLEDGED` → `IN_REVIEW` → `CONVERTED_TO_WORK_ORDER`
+
+Terminal alternatives: `SUBMITTED` → `CANCELLED`; `ACKNOWLEDGED`/`IN_REVIEW` → `REJECTED`. Customers cannot set status directly.
+
+### Customer APIs (`/api/customer`)
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/profile` | Own customer profile (read-only) |
+| GET | `/summary` | Dashboard counts |
+| GET | `/sites` | Own sites (paginated, read-only) |
+| GET | `/requests` | Own service requests (page, search, status, sort) |
+| GET/POST/PUT | `/requests`, `/requests/{id}` | Create/view/update own request |
+| PATCH | `/requests/{id}/cancel` | Cancel while `SUBMITTED` |
+| GET | `/work-orders`, `/work-orders/{id}` | Own work orders + customer-safe SLA fields |
+
+### Internal request APIs (`/api/service-requests`)
+
+ADMIN, MANAGER, and DISPATCHER can list/view requests. Update/acknowledge/review/reject requires `UPDATE_SERVICE_REQUEST`. Conversion (`POST /{id}/convert-to-work-order`) requires `CONVERT_SERVICE_REQUEST` and uses existing `WorkOrderService` in one transaction.
+
+### Role restrictions
+
+CUSTOMER keeps `LOGIN`, `LOGOUT`, `REQUEST_RAISE`, `VIEW_OWN_REQUEST` only. They do **not** receive `VIEW_WORK_ORDER`, `VIEW_CUSTOMER`, or `VIEW_SITE`. Cross-customer IDs return 404. Notifications reuse the existing inbox/WebSocket path.

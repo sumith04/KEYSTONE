@@ -50,7 +50,10 @@ public class RolePermissionMapper {
                 Permission.DELETE_SLA,
                 Permission.VIEW_DASHBOARD,
                 Permission.VIEW_REPORT,
-                Permission.SEND_NOTIFICATION
+                Permission.SEND_NOTIFICATION,
+                Permission.VIEW_SERVICE_REQUEST,
+                Permission.UPDATE_SERVICE_REQUEST,
+                Permission.CONVERT_SERVICE_REQUEST
         );
         rolePermissionsMap.put(Role.MANAGER, Collections.unmodifiableSet(managerPermissions));
 
@@ -65,7 +68,10 @@ public class RolePermissionMapper {
                 Permission.VIEW_WORK_ORDER,
                 Permission.ASSIGN_WORK_ORDER,
                 Permission.VIEW_SLA,
-                Permission.VIEW_DASHBOARD
+                Permission.VIEW_DASHBOARD,
+                Permission.VIEW_SERVICE_REQUEST,
+                Permission.UPDATE_SERVICE_REQUEST,
+                Permission.CONVERT_SERVICE_REQUEST
         );
         rolePermissionsMap.put(Role.DISPATCHER, Collections.unmodifiableSet(dispatcherPermissions));
 

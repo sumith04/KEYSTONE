@@ -180,6 +180,9 @@ public class GlobalExceptionHandler {
         if (details.contains("uk_parts_part_number") || details.contains("part_number")) {
             return "A part with this part number already exists.";
         }
+        if (details.contains("uk_service_requests_number") || details.contains("request_number")) {
+            return "A service request with this number already exists.";
+        }
         return "A resource with the same unique value already exists.";
     }
 }

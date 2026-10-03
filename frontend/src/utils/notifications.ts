@@ -1,14 +1,18 @@
-import { Notification, NotificationType, RelatedEntityType } from '../types';
+import { Notification, NotificationType, RelatedEntityType, Role } from '../types';
 
 export const notificationPath = (
   relatedEntityType?: RelatedEntityType | null,
-  relatedEntityId?: number | null
+  relatedEntityId?: number | null,
+  role?: Role | null
 ): string | null => {
   if (relatedEntityType === 'WORK_ORDER' && relatedEntityId) {
-    return `/work-orders/${relatedEntityId}`;
+    return role === 'CUSTOMER' ? `/customer/work-orders/${relatedEntityId}` : `/work-orders/${relatedEntityId}`;
+  }
+  if (relatedEntityType === 'SERVICE_REQUEST' && relatedEntityId) {
+    return role === 'CUSTOMER' ? `/customer/requests/${relatedEntityId}` : `/service-requests/${relatedEntityId}`;
   }
   if (relatedEntityType === 'PART') {
-    return '/parts';
+    return role === 'CUSTOMER' ? null : '/parts';
   }
   return null;
 };
@@ -71,6 +75,10 @@ export const notificationTypeLabel = (type: NotificationType): string => {
     case 'PART_LOW_STOCK':
       return 'Low stock';
     case 'SERVICE_REQUEST':
+    case 'SERVICE_REQUEST_SUBMITTED':
+    case 'SERVICE_REQUEST_ACKNOWLEDGED':
+    case 'SERVICE_REQUEST_CONVERTED':
+    case 'SERVICE_REQUEST_REJECTED':
       return 'Service request';
     default:
       return 'General';

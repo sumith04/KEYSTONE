@@ -53,6 +53,16 @@ import {
   NotificationListQueryParams,
   NotificationPage,
   UnreadCountResponse,
+  CreateServiceRequest,
+  UpdateServiceRequest,
+  ServiceRequest,
+  ServiceRequestPage,
+  ServiceRequestListQueryParams,
+  CustomerProfile,
+  CustomerPortalSummary,
+  CustomerWorkOrder,
+  CustomerWorkOrderPage,
+  CustomerWorkOrderListQueryParams,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -540,5 +550,135 @@ export const markNotificationAsRead = async (id: number): Promise<Notification> 
 
 export const markAllNotificationsAsRead = async (): Promise<UnreadCountResponse> => {
   const response = await apiClient.patch<UnreadCountResponse>('/notifications/read-all');
+  return response.data;
+};
+
+const toServiceRequestParams = (params: ServiceRequestListQueryParams = {}) => {
+  const query: Record<string, string | number> = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+    sort: params.sort ?? 'createdAt,desc',
+  };
+  if (params.search && params.search.trim()) {
+    query.search = params.search.trim();
+  }
+  if (params.status) {
+    query.status = params.status;
+  }
+  if (params.priority) {
+    query.priority = params.priority;
+  }
+  if (params.customerId != null) {
+    query.customerId = params.customerId;
+  }
+  return query;
+};
+
+export const getCustomerProfile = async (): Promise<CustomerProfile> => {
+  const response = await apiClient.get<CustomerProfile>('/customer/profile');
+  return response.data;
+};
+
+export const getCustomerPortalSummary = async (): Promise<CustomerPortalSummary> => {
+  const response = await apiClient.get<CustomerPortalSummary>('/customer/summary');
+  return response.data;
+};
+
+export const getCustomerSites = async (params: ListQueryParams = {}): Promise<SitePageResponse> => {
+  const response = await apiClient.get<SitePageResponse>('/customer/sites', {
+    params: {
+      page: params.page ?? 0,
+      size: params.size ?? 20,
+    },
+  });
+  return response.data;
+};
+
+export const getMyServiceRequests = async (
+  params: ServiceRequestListQueryParams = {}
+): Promise<ServiceRequestPage> => {
+  const response = await apiClient.get<ServiceRequestPage>('/customer/requests', {
+    params: toServiceRequestParams(params),
+  });
+  return response.data;
+};
+
+export const getMyServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.get<ServiceRequest>(`/customer/requests/${id}`);
+  return response.data;
+};
+
+export const createMyServiceRequest = async (payload: CreateServiceRequest): Promise<ServiceRequest> => {
+  const response = await apiClient.post<ServiceRequest>('/customer/requests', payload);
+  return response.data;
+};
+
+export const updateMyServiceRequest = async (
+  id: number,
+  payload: UpdateServiceRequest
+): Promise<ServiceRequest> => {
+  const response = await apiClient.put<ServiceRequest>(`/customer/requests/${id}`, payload);
+  return response.data;
+};
+
+export const cancelMyServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.patch<ServiceRequest>(`/customer/requests/${id}/cancel`);
+  return response.data;
+};
+
+export const getCustomerWorkOrders = async (
+  params: CustomerWorkOrderListQueryParams = {}
+): Promise<CustomerWorkOrderPage> => {
+  const query: Record<string, string | number> = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+    sort: params.sort ?? 'createdAt,desc',
+  };
+  if (params.search && params.search.trim()) {
+    query.search = params.search.trim();
+  }
+  if (params.status) {
+    query.status = params.status;
+  }
+  const response = await apiClient.get<CustomerWorkOrderPage>('/customer/work-orders', { params: query });
+  return response.data;
+};
+
+export const getCustomerWorkOrder = async (id: number): Promise<CustomerWorkOrder> => {
+  const response = await apiClient.get<CustomerWorkOrder>(`/customer/work-orders/${id}`);
+  return response.data;
+};
+
+export const getServiceRequests = async (
+  params: ServiceRequestListQueryParams = {}
+): Promise<ServiceRequestPage> => {
+  const response = await apiClient.get<ServiceRequestPage>('/service-requests', {
+    params: toServiceRequestParams(params),
+  });
+  return response.data;
+};
+
+export const getServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.get<ServiceRequest>(`/service-requests/${id}`);
+  return response.data;
+};
+
+export const acknowledgeServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.patch<ServiceRequest>(`/service-requests/${id}/acknowledge`);
+  return response.data;
+};
+
+export const reviewServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.patch<ServiceRequest>(`/service-requests/${id}/review`);
+  return response.data;
+};
+
+export const rejectServiceRequest = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.patch<ServiceRequest>(`/service-requests/${id}/reject`);
+  return response.data;
+};
+
+export const convertServiceRequestToWorkOrder = async (id: number): Promise<ServiceRequest> => {
+  const response = await apiClient.post<ServiceRequest>(`/service-requests/${id}/convert-to-work-order`);
   return response.data;
 };

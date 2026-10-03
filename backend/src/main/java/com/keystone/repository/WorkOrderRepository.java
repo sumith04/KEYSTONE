@@ -39,6 +39,15 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     long countByStatus(WorkOrderStatus status);
 
+    long countByCustomerIdAndStatus(Long customerId, WorkOrderStatus status);
+
+    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy", "slaPolicy"})
+    @Query("SELECT w FROM WorkOrder w WHERE w.id = :id AND w.customer.id = :customerId")
+    Optional<WorkOrder> findByIdAndCustomerIdWithRelations(
+            @Param("id") Long id,
+            @Param("customerId") Long customerId
+    );
+
     @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy", "slaPolicy"})
     @Query("SELECT w FROM WorkOrder w WHERE " +
            "(:search IS NULL OR LOWER(w.workOrderNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +

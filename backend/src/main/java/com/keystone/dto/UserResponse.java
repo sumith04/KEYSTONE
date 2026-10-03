@@ -19,6 +19,7 @@ public class UserResponse {
     private String userEmail;
     private String phone;
     private Role role;
+    private Long customerId;
     private boolean enabled;
     private LocalDateTime createdAt;
 
@@ -31,6 +32,7 @@ public class UserResponse {
                 .userEmail(user.getUserEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .customerId(user.getCustomer() != null ? user.getCustomer().getId() : null)
                 .enabled(user.isEnabled())
                 .createdAt(user.getCreatedAt())
                 .build();
