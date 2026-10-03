@@ -1,13 +1,17 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Client } from '@stomp/stompjs';
 import { useAuth } from '../hooks/useAuth';
 import {
+  AUTH_TOKEN_KEY,
   getNotifications,
   getUnreadNotificationCount,
   markAllNotificationsAsRead,
   markNotificationAsRead,
 } from '../services/api';
+import { createNotificationSocket } from '../services/notificationSocket';
 import { Notification } from '../types';
 import { mergeIncomingNotification } from '../utils/notifications';
+import { isJwtExpired } from '../utils/websocket';
 
 export interface NotificationContextValue {
   unreadCount: number;
@@ -31,6 +35,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
+  const seenIdsRef = useRef<Set<number>>(new Set());
+  const socketRef = useRef<Client | null>(null);
 
   const refreshUnreadCount = useCallback(async () => {
     if (!isAuthenticated) {
@@ -49,6 +55,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     setRecentLoading(true);
     try {
       const page = await getNotifications({ page: 0, size: 8 });
+      page.content.forEach((item) => seenIdsRef.current.add(item.id));
       setRecentNotifications(page.content);
       setUnreadCount(page.unreadCount);
     } finally {
@@ -77,8 +84,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }, []);
 
   const applyIncomingNotification = useCallback((notification: Notification) => {
+    if (!notification || typeof notification.id !== 'number') {
+      return;
+    }
+    const isNew = !seenIdsRef.current.has(notification.id);
+    seenIdsRef.current.add(notification.id);
     setRecentNotifications((current) => mergeIncomingNotification(current, notification).slice(0, 8));
-    if (!notification.read) {
+    if (isNew && !notification.read) {
       setUnreadCount((count) => count + 1);
     }
   }, []);
@@ -87,12 +99,44 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     if (!isAuthenticated) {
       setUnreadCount(0);
       setRecentNotifications([]);
+      seenIdsRef.current = new Set();
       return;
     }
     refreshUnreadCount().catch(() => {
       setUnreadCount(0);
     });
   }, [isAuthenticated, refreshUnreadCount]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      socketRef.current?.deactivate();
+      socketRef.current = null;
+      return;
+    }
+
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token || isJwtExpired(token)) {
+      return;
+    }
+
+    const client = createNotificationSocket({
+      token,
+      onNotification: applyIncomingNotification,
+      onConnected: () => {
+        refreshUnreadCount().catch(() => undefined);
+        loadRecentNotifications().catch(() => undefined);
+      },
+    });
+    socketRef.current = client;
+    client.activate();
+
+    return () => {
+      client.deactivate();
+      if (socketRef.current === client) {
+        socketRef.current = null;
+      }
+    };
+  }, [isAuthenticated, applyIncomingNotification, refreshUnreadCount, loadRecentNotifications]);
 
   const value = useMemo<NotificationContextValue>(
     () => ({

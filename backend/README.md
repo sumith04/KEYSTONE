@@ -104,4 +104,15 @@ Automatic triggers (failures are isolated and do not roll back the business oper
 - `NotificationService.notifySlaIfNeeded(workOrder)` creates `SLA_AT_RISK` / `SLA_BREACHED` once per recipient/type/work order. KEYSTONE has no scheduler yet, so this is a hook for future monitoring rather than live SLA polling.
 - `SERVICE_REQUEST` is reserved for the Customer Portal (Prompt 13). No service-request module exists here.
 
-WebSockets / real-time push are not implemented in this module. Retention cleanup is not scheduled; add a purge job later if needed.
+WebSocket / STOMP real-time delivery is layered on top of this REST inbox. The database remains the source of truth. Delivery failures are logged and never roll back the persisted notification. Retention cleanup is not scheduled; add a purge job later if needed.
+
+### Real-time delivery
+
+| Item | Value |
+|---|---|
+| Handshake | `/ws` (SockJS) |
+| Application prefix | `/app` |
+| User destination | `/user/queue/notifications` |
+| Auth | STOMP CONNECT `Authorization: Bearer <JWT>` |
+
+Clients may only subscribe to `/user/queue/notifications`. They cannot publish notifications. Handshake `/ws/**` is permitted so the browser can upgrade; the ChannelInterceptor rejects CONNECT without a valid JWT.

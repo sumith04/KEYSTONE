@@ -159,7 +159,7 @@ The platform is intentionally structured to cleanly receive the following future
 - [ ] **Parts & Inventory Tracking**
 - [ ] **Technician Time Tracking**
 - [ ] **SLA Monitoring & Compliance**
-- [x] **In-app Notifications** (persisted inbox, ownership isolation; WebSockets not included)
-- [ ] **Real-Time Notifications & WebSockets**
+- [x] **In-app Notifications** (persisted inbox, ownership isolation)
+- [x] **Real-Time Notifications & WebSockets** (STOMP over SockJS; JWT CONNECT)
 - [ ] **Analytical Dashboards & Reports**
 - [ ] **Customer Self-Service Portal**

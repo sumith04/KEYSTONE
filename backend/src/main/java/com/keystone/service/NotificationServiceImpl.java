@@ -37,6 +37,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final WorkOrderAccessGuard workOrderAccessGuard;
     private final NotificationCreator notificationCreator;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
     @Transactional
@@ -48,8 +49,10 @@ public class NotificationServiceImpl implements NotificationService {
             RelatedEntityType relatedEntityType,
             Long relatedEntityId) {
 
-        return NotificationResponse.fromEntity(notificationCreator.persist(
-                recipientId, type, title, message, relatedEntityType, relatedEntityId));
+        Notification saved = notificationCreator.persist(
+                recipientId, type, title, message, relatedEntityType, relatedEntityId);
+        publishAfterPersist(saved);
+        return NotificationResponse.fromEntity(saved);
     }
 
     @Override
@@ -264,9 +267,19 @@ public class NotificationServiceImpl implements NotificationService {
             RelatedEntityType relatedEntityType,
             Long relatedEntityId) {
         try {
-            notificationCreator.persist(recipientId, type, title, message, relatedEntityType, relatedEntityId);
+            Notification saved = notificationCreator.persist(
+                    recipientId, type, title, message, relatedEntityType, relatedEntityId);
+            publishAfterPersist(saved);
         } catch (Exception ex) {
             log.warn("Failed to create {} notification for user {}: {}", type, recipientId, ex.getMessage());
+        }
+    }
+
+    private void publishAfterPersist(Notification saved) {
+        try {
+            notificationPublisher.publishSafely(saved);
+        } catch (Exception ex) {
+            log.warn("WebSocket publish failed for notification {}: {}", saved != null ? saved.getId() : null, ex.getMessage());
         }
     }
 
