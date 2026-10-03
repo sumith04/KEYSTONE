@@ -13,6 +13,9 @@ import { SiteCreatePage } from '../pages/sites/SiteCreatePage';
 import { SiteDetailPage } from '../pages/sites/SiteDetailPage';
 import { SiteEditPage } from '../pages/sites/SiteEditPage';
 import { SiteListPage } from '../pages/sites/SiteListPage';
+import { SlaPoliciesPage } from '../pages/sla/SlaPoliciesPage';
+import { SlaPolicyCreatePage } from '../pages/sla/SlaPolicyCreatePage';
+import { SlaPolicyEditPage } from '../pages/sla/SlaPolicyEditPage';
 import { PartCreatePage } from '../pages/parts/PartCreatePage';
 import { PartEditPage } from '../pages/parts/PartEditPage';
 import { PartsPage } from '../pages/parts/PartsPage';
@@ -75,6 +78,16 @@ export const AppRoutes: React.FC = () => {
           </Route>
           <Route element={<PermissionRoute requiredPermission="VIEW_PART" />}>
             <Route path="parts" element={<PartsPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute requiredPermission="CREATE_SLA" />}>
+            <Route path="sla-policies/new" element={<SlaPolicyCreatePage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="UPDATE_SLA" />}>
+            <Route path="sla-policies/:id/edit" element={<SlaPolicyEditPage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="VIEW_SLA" />}>
+            <Route path="sla-policies" element={<SlaPoliciesPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

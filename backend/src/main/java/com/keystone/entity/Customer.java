@@ -72,6 +72,10 @@ public class Customer {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sla_policy_id")
+    private SlaPolicy slaPolicy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

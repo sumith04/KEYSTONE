@@ -150,6 +150,14 @@ export const CustomerDetailPage: React.FC = () => {
           label="Address"
           value={[customer.addressLine1, customer.addressLine2].filter(Boolean).join(', ') || null}
         />
+        <Detail
+          label="SLA policy"
+          value={
+            customer.slaPolicyName
+              ? `${customer.slaPolicyName}${customer.slaPolicyActive === false ? ' (inactive)' : ''}`
+              : 'None'
+          }
+        />
         <div className="md:col-span-2">
           <Detail label="Notes" value={customer.notes} />
         </div>

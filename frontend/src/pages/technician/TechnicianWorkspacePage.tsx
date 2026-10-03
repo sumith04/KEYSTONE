@@ -5,10 +5,11 @@ import { ClipboardList, PauseCircle, PlayCircle, Search, CheckCircle2 } from 'lu
 import { AlertBanner } from '../../components/AlertBanner';
 import { Pagination } from '../../components/Pagination';
 import { getWorkOrderSummary, getWorkOrders } from '../../services/api';
-import { WorkOrderPageResponse, WorkOrderPriority, WorkOrderStatus, WorkOrderSummary } from '../../types';
+import { SlaStatus, WorkOrderPageResponse, WorkOrderPriority, WorkOrderStatus, WorkOrderSummary } from '../../types';
 import { getApiError } from '../../utils/apiError';
 import {
   formatDateTime,
+  SlaStatusBadge,
   WorkOrderPriorityBadge,
   WorkOrderStatusBadge,
 } from '../work-orders/WorkOrderBadges';
@@ -23,6 +24,7 @@ export const TechnicianWorkspacePage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<WorkOrderStatus | ''>('');
   const [priority, setPriority] = useState<WorkOrderPriority | ''>('');
+  const [slaStatus, setSlaStatus] = useState<SlaStatus | ''>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +39,7 @@ export const TechnicianWorkspacePage: React.FC = () => {
           search,
           status: status || undefined,
           priority: priority || undefined,
+          slaStatus: slaStatus || undefined,
           sort: 'createdAt,desc',
         }),
         getWorkOrderSummary(),
@@ -56,7 +59,7 @@ export const TechnicianWorkspacePage: React.FC = () => {
     }
     loadWorkspace();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, status, priority, role]);
+  }, [page, search, status, priority, slaStatus, role]);
 
   const handleSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -149,9 +152,24 @@ export const TechnicianWorkspacePage: React.FC = () => {
             Search
           </button>
         </div>
-        <button type="submit" className="hidden md:inline-flex md:col-span-4 justify-center rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 text-sm">
-          Search
-        </button>
+          <select
+            value={slaStatus}
+            onChange={(event) => {
+              setPage(0);
+              setSlaStatus(event.target.value as SlaStatus | '');
+            }}
+            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+          >
+            <option value="">All SLA statuses</option>
+            <option value="ON_TRACK">On track</option>
+            <option value="AT_RISK">At risk</option>
+            <option value="BREACHED">Breached</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="NO_SLA">No SLA</option>
+          </select>
+          <button type="submit" className="hidden md:inline-flex md:col-span-4 justify-center rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2 text-sm">
+            Search
+          </button>
       </form>
 
       {error && <AlertBanner tone="error" message={error} />}
@@ -172,6 +190,7 @@ export const TechnicianWorkspacePage: React.FC = () => {
                   <th className="text-left px-4 py-3 font-medium">Site</th>
                   <th className="text-left px-4 py-3 font-medium">Priority</th>
                   <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">SLA</th>
                   <th className="text-left px-4 py-3 font-medium">Scheduled start</th>
                   <th className="text-left px-4 py-3 font-medium">Scheduled end</th>
                   <th className="text-right px-4 py-3 font-medium">Action</th>
@@ -189,6 +208,9 @@ export const TechnicianWorkspacePage: React.FC = () => {
                     </td>
                     <td className="px-4 py-3">
                       <WorkOrderStatusBadge status={workOrder.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <SlaStatusBadge status={workOrder.slaStatus} />
                     </td>
                     <td className="px-4 py-3 text-slate-400">{formatDateTime(workOrder.scheduledStart)}</td>
                     <td className="px-4 py-3 text-slate-400">{formatDateTime(workOrder.scheduledEnd)}</td>

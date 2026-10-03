@@ -5,12 +5,14 @@ import com.keystone.dto.CustomerPageResponse;
 import com.keystone.dto.CustomerResponse;
 import com.keystone.dto.UpdateCustomerRequest;
 import com.keystone.entity.Customer;
+import com.keystone.entity.SlaPolicy;
 import com.keystone.enums.CustomerStatus;
 import com.keystone.exception.ApiException;
 import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.SlaPolicyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +35,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
+    private final SlaPolicyRepository slaPolicyRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -87,9 +90,10 @@ public class CustomerServiceImpl implements CustomerService {
                 .country(trimToNull(request.getCountry()))
                 .notes(trimToNull(request.getNotes()))
                 .status(CustomerStatus.ACTIVE)
+                .slaPolicy(resolveSlaPolicy(request.getSlaPolicyId()))
                 .build();
 
-        return CustomerResponse.fromEntity(customerRepository.save(customer));
+        return CustomerResponse.fromEntity(saveAndReload(customer));
     }
 
     @Override
@@ -117,8 +121,9 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPostalCode(trimToNull(request.getPostalCode()));
         customer.setCountry(trimToNull(request.getCountry()));
         customer.setNotes(trimToNull(request.getNotes()));
+        customer.setSlaPolicy(resolveSlaPolicy(request.getSlaPolicyId()));
 
-        return CustomerResponse.fromEntity(customerRepository.save(customer));
+        return CustomerResponse.fromEntity(saveAndReload(customer));
     }
 
     @Override
@@ -130,7 +135,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         Customer customer = findCustomer(id);
         customer.setStatus(status);
-        return CustomerResponse.fromEntity(customerRepository.save(customer));
+        return CustomerResponse.fromEntity(saveAndReload(customer));
     }
 
     @Override
@@ -149,8 +154,22 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private Customer findCustomer(Long id) {
-        return customerRepository.findById(id)
+        return customerRepository.findByIdWithSlaPolicy(id)
+                .or(() -> customerRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+    }
+
+    private Customer saveAndReload(Customer customer) {
+        Customer saved = customerRepository.save(customer);
+        return customerRepository.findByIdWithSlaPolicy(saved.getId()).orElse(saved);
+    }
+
+    private SlaPolicy resolveSlaPolicy(Long slaPolicyId) {
+        if (slaPolicyId == null) {
+            return null;
+        }
+        return slaPolicyRepository.findById(slaPolicyId)
+                .orElseThrow(() -> new ResourceNotFoundException("SLA policy not found with id: " + slaPolicyId));
     }
 
     private void assertCustomerCodeAvailable(String customerCode, Long currentId) {

@@ -78,6 +78,31 @@ public class WorkOrder {
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sla_policy_id")
+    private SlaPolicy slaPolicy;
+
+    @Column(name = "sla_policy_name")
+    private String slaPolicyName;
+
+    @Column(name = "sla_response_due_at")
+    private LocalDateTime slaResponseDueAt;
+
+    @Column(name = "sla_resolution_due_at")
+    private LocalDateTime slaResolutionDueAt;
+
+    @Column(name = "response_at")
+    private LocalDateTime responseAt;
+
+    @Column(name = "response_breached")
+    private Boolean responseBreached;
+
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
+
+    @Column(name = "resolution_breached")
+    private Boolean resolutionBreached;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

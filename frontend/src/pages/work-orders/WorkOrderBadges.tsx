@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorkOrderPriority, WorkOrderStatus, WorkType } from '../../types';
+import { SlaStatus, WorkOrderPriority, WorkOrderStatus, WorkType } from '../../types';
 
 const statusStyles: Record<WorkOrderStatus, string> = {
   NEW: 'bg-slate-800 text-slate-200 border-slate-600',
@@ -36,6 +36,18 @@ export const WorkOrderStatusBadge: React.FC<{ status: WorkOrderStatus }> = ({ st
 
 export const WorkOrderPriorityBadge: React.FC<{ priority: WorkOrderPriority }> = ({ priority }) => (
   <span className={badgeClass(priorityStyles[priority])}>{priority}</span>
+);
+
+const slaStyles: Record<SlaStatus, string> = {
+  ON_TRACK: 'bg-emerald-950/70 text-emerald-300 border-emerald-800',
+  AT_RISK: 'bg-amber-950/70 text-amber-300 border-amber-800',
+  BREACHED: 'bg-rose-950/70 text-rose-300 border-rose-800',
+  RESOLVED: 'bg-sky-950/70 text-sky-300 border-sky-800',
+  NO_SLA: 'bg-slate-800 text-slate-300 border-slate-600',
+};
+
+export const SlaStatusBadge: React.FC<{ status?: SlaStatus | null }> = ({ status }) => (
+  <span className={badgeClass(slaStyles[status || 'NO_SLA'])}>{(status || 'NO_SLA').replace('_', ' ')}</span>
 );
 
 export const formatWorkType = (workType: WorkType) => workTypeLabels[workType] || workType;

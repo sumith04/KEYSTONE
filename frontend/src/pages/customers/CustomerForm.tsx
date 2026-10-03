@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { CreateCustomerRequest } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { usePermissions } from '../../hooks/usePermissions';
+import { getSlaPolicies } from '../../services/api';
+import { CreateCustomerRequest, SlaPolicy } from '../../types';
 
 interface CustomerFormProps {
   initialValues?: Partial<CreateCustomerRequest>;
@@ -24,6 +26,7 @@ const emptyValues: CreateCustomerRequest = {
   postalCode: '',
   country: '',
   notes: '',
+  slaPolicyId: undefined,
 };
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -45,10 +48,22 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
     [initialValues]
   );
 
+  const { hasPermission } = usePermissions();
   const [values, setValues] = useState<CreateCustomerRequest>(startingValues);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  const [policies, setPolicies] = useState<SlaPolicy[]>([]);
+  const canViewSla = hasPermission('VIEW_SLA');
 
-  const updateField = (field: keyof CreateCustomerRequest, value: string) => {
+  useEffect(() => {
+    if (!canViewSla) {
+      return;
+    }
+    getSlaPolicies({ page: 0, size: 100, sort: 'name,asc' })
+      .then((data) => setPolicies(data.content))
+      .catch(() => undefined);
+  }, [canViewSla]);
+
+  const updateField = <K extends keyof CreateCustomerRequest>(field: K, value: CreateCustomerRequest[K]) => {
     setValues((current) => ({ ...current, [field]: value }));
   };
 
@@ -88,6 +103,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
       postalCode: values.postalCode?.trim() || undefined,
       country: values.country?.trim() || undefined,
       notes: values.notes?.trim() || undefined,
+      slaPolicyId: values.slaPolicyId || undefined,
     };
 
     await onSubmit(payload);
@@ -207,6 +223,25 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
             onChange={(event) => updateField('postalCode', event.target.value)}
           />
         </label>
+        {canViewSla && (
+          <label className="space-y-1 text-sm md:col-span-2">
+            <span className="text-slate-300">SLA policy</span>
+            <select
+              className={fieldClass}
+              value={values.slaPolicyId ?? ''}
+              onChange={(event) =>
+                updateField('slaPolicyId', event.target.value ? Number(event.target.value) : undefined)
+              }
+            >
+              <option value="">No SLA</option>
+              {policies.map((policy) => (
+                <option key={policy.id} value={policy.id}>
+                  {policy.name} ({policy.active ? 'Active' : 'Inactive'})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="space-y-1 text-sm md:col-span-2">
           <span className="text-slate-300">Notes</span>
           <textarea

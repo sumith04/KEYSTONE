@@ -5,12 +5,15 @@ import com.keystone.dto.CustomerPageResponse;
 import com.keystone.dto.CustomerResponse;
 import com.keystone.dto.UpdateCustomerRequest;
 import com.keystone.entity.Customer;
+import com.keystone.entity.SlaPolicy;
 import com.keystone.enums.CustomerStatus;
+import com.keystone.enums.WorkOrderPriority;
 import com.keystone.exception.ApiException;
 import com.keystone.exception.DuplicateResourceException;
 import com.keystone.exception.ResourceNotFoundException;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
+import com.keystone.repository.SlaPolicyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +41,9 @@ class CustomerServiceTest {
 
     @Mock
     private SiteRepository siteRepository;
+
+    @Mock
+    private SlaPolicyRepository slaPolicyRepository;
 
     @InjectMocks
     private CustomerServiceImpl customerService;
@@ -83,6 +89,39 @@ class CustomerServiceTest {
         assertEquals("jane.doe@acme.com", captor.getValue().getEmail());
         assertEquals(CustomerStatus.ACTIVE, captor.getValue().getStatus());
         assertEquals("ACME001", response.getCustomerCode());
+        assertNull(captor.getValue().getSlaPolicy());
+    }
+
+    @Test
+    void createCustomer_WithActiveSlaPolicy_ShouldAssociate() {
+        SlaPolicy policy = SlaPolicy.builder()
+                .id(3L)
+                .name("Gold")
+                .priority(WorkOrderPriority.HIGH)
+                .responseTimeMinutes(60)
+                .resolutionTimeMinutes(240)
+                .active(true)
+                .build();
+        acme.setSlaPolicy(policy);
+
+        CreateCustomerRequest request = CreateCustomerRequest.builder()
+                .customerCode("ACME001")
+                .companyName("Acme Facilities")
+                .slaPolicyId(3L)
+                .build();
+
+        when(customerRepository.existsByCustomerCode("ACME001")).thenReturn(false);
+        when(slaPolicyRepository.findById(3L)).thenReturn(Optional.of(policy));
+        when(customerRepository.save(any(Customer.class))).thenReturn(acme);
+        when(customerRepository.findByIdWithSlaPolicy(1L)).thenReturn(Optional.of(acme));
+
+        CustomerResponse response = customerService.createCustomer(request);
+
+        ArgumentCaptor<Customer> captor = ArgumentCaptor.forClass(Customer.class);
+        verify(customerRepository).save(captor.capture());
+        assertEquals(policy, captor.getValue().getSlaPolicy());
+        assertEquals(3L, response.getSlaPolicyId());
+        assertEquals("Gold", response.getSlaPolicyName());
     }
 
     @Test

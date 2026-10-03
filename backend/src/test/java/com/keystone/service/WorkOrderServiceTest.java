@@ -63,6 +63,9 @@ class WorkOrderServiceTest {
     @Mock
     private TimeLogRepository timeLogRepository;
 
+    @Mock
+    private SlaService slaService;
+
     @InjectMocks
     private WorkOrderServiceImpl workOrderService;
 
@@ -182,6 +185,7 @@ class WorkOrderServiceTest {
         assertEquals(site, captor.getValue().getSite());
         assertEquals(creator, captor.getValue().getCreatedBy());
         assertEquals("WO-000042", response.getWorkOrderNumber());
+        verify(slaService).applySnapshot(any(WorkOrder.class), eq(customer));
     }
 
     @Test
@@ -264,7 +268,7 @@ class WorkOrderServiceTest {
                 .thenReturn(new PageImpl<>(List.of(workOrder)));
 
         WorkOrderPageResponse response = workOrderService.getWorkOrders(
-                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, null, DISPATCHER_EMAIL);
+                0, 10, "createdAt,desc", "hvac", WorkOrderStatus.NEW, WorkOrderPriority.HIGH, 1L, 10L, null, null, DISPATCHER_EMAIL);
 
         assertEquals(1, response.getContent().size());
         assertEquals(1, response.getTotalElements());
@@ -318,6 +322,7 @@ class WorkOrderServiceTest {
         assertEquals(WorkOrderStatus.ASSIGNED, workOrder.getStatus());
         assertEquals(technician, workOrder.getAssignedTechnician());
         assertEquals("Terry Tech", response.getAssignedTechnicianName());
+        verify(slaService).recordResponseIfNeeded(eq(workOrder), any());
     }
 
     @Test
@@ -423,6 +428,7 @@ class WorkOrderServiceTest {
         assertEquals(WorkOrderStatus.IN_PROGRESS, workOrderService.resumeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
         assertEquals(WorkOrderStatus.COMPLETED, workOrderService.completeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
         assertNotNull(workOrder.getActualEnd());
+        verify(slaService).recordResolutionIfNeeded(eq(workOrder), any());
         assertEquals(WorkOrderStatus.CLOSED, workOrderService.closeWorkOrder(7L, DISPATCHER_EMAIL).getStatus());
     }
 

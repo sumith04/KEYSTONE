@@ -86,6 +86,7 @@ export const CustomerEditPage: React.FC = () => {
             postalCode: customer.postalCode ?? undefined,
             country: customer.country ?? undefined,
             notes: customer.notes ?? undefined,
+            slaPolicyId: customer.slaPolicyId ?? undefined,
           }}
           submitLabel="Save changes"
           submitting={submitting}

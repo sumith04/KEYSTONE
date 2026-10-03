@@ -6,12 +6,15 @@ import com.keystone.dto.UpdateWorkOrderRequest;
 import com.keystone.dto.UserResponse;
 import com.keystone.dto.WorkOrderPageResponse;
 import com.keystone.dto.WorkOrderResponse;
+import com.keystone.dto.WorkOrderSlaPageResponse;
+import com.keystone.dto.WorkOrderSlaResponse;
 import com.keystone.dto.WorkOrderSummaryResponse;
 import com.keystone.entity.Customer;
 import com.keystone.entity.Site;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
 import com.keystone.enums.Role;
+import com.keystone.enums.SlaStatus;
 import com.keystone.enums.WorkOrderPriority;
 import com.keystone.enums.WorkOrderStatus;
 import com.keystone.exception.ApiException;
@@ -70,6 +73,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final UserRepository userRepository;
     private final WorkOrderPartRepository workOrderPartRepository;
     private final TimeLogRepository timeLogRepository;
+    private final SlaService slaService;
 
     @Override
     @Transactional(readOnly = true)
@@ -83,22 +87,45 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             Long customerId,
             Long siteId,
             Long technicianId,
+            SlaStatus slaStatus,
             String currentUsername) {
 
         User currentUser = findCurrentUser(currentUsername);
         Long scopedTechnicianId = resolveScopedTechnicianId(currentUser, technicianId);
 
         Pageable pageable = buildPageable(page, size, sort);
-        Page<WorkOrder> workOrderPage = workOrderRepository.searchWorkOrders(
-                normalizeSearch(search), status, priority, customerId, siteId, scopedTechnicianId, pageable);
+        LocalDateTime now = LocalDateTime.now();
 
-        List<WorkOrderResponse> content = workOrderPage.getContent()
+        if (slaStatus == null) {
+            Page<WorkOrder> workOrderPage = workOrderRepository.searchWorkOrders(
+                    normalizeSearch(search), status, priority, customerId, siteId, scopedTechnicianId, pageable);
+            return toPageResponse(workOrderPage);
+        }
+
+        List<WorkOrder> filtered = workOrderRepository.searchWorkOrders(
+                        normalizeSearch(search), status, priority, customerId, siteId, scopedTechnicianId, Pageable.unpaged())
                 .stream()
-                .map(WorkOrderResponse::fromEntity)
+                .filter(workOrder -> SlaCalculator.calculateStatus(workOrder, now) == slaStatus)
                 .toList();
 
+        int from = Math.min(pageable.getPageNumber() * pageable.getPageSize(), filtered.size());
+        int to = Math.min(from + pageable.getPageSize(), filtered.size());
+        int totalPages = pageable.getPageSize() == 0
+                ? 0
+                : (int) Math.ceil((double) filtered.size() / pageable.getPageSize());
+
         return WorkOrderPageResponse.builder()
-                .content(content)
+                .content(filtered.subList(from, to).stream().map(WorkOrderResponse::fromEntity).toList())
+                .page(pageable.getPageNumber())
+                .size(pageable.getPageSize())
+                .totalElements(filtered.size())
+                .totalPages(totalPages)
+                .build();
+    }
+
+    private WorkOrderPageResponse toPageResponse(Page<WorkOrder> workOrderPage) {
+        return WorkOrderPageResponse.builder()
+                .content(workOrderPage.getContent().stream().map(WorkOrderResponse::fromEntity).toList())
                 .page(workOrderPage.getNumber())
                 .size(workOrderPage.getSize())
                 .totalElements(workOrderPage.getTotalElements())
@@ -170,6 +197,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         WorkOrder saved = workOrderRepository.saveAndFlush(workOrder);
         saved.setWorkOrderNumber(formatWorkOrderNumber(saved.getId()));
+        slaService.applySnapshot(saved, customer);
         workOrderRepository.save(saved);
 
         return WorkOrderResponse.fromEntity(findWorkOrder(saved.getId()));
@@ -220,6 +248,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         }
 
         workOrder.setAssignedTechnician(technician);
+        slaService.recordResponseIfNeeded(workOrder, LocalDateTime.now());
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
     }
@@ -265,6 +294,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         if (workOrder.getActualEnd() == null) {
             workOrder.setActualEnd(LocalDateTime.now());
         }
+        slaService.recordResolutionIfNeeded(workOrder, LocalDateTime.now());
         workOrderRepository.save(workOrder);
         return WorkOrderResponse.fromEntity(findWorkOrder(id));
     }
@@ -310,6 +340,30 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             );
         }
         workOrderRepository.delete(workOrder);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkOrderSlaResponse getWorkOrderSla(Long id, String currentUsername) {
+        return slaService.getWorkOrderSla(id, currentUsername);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkOrderSlaPageResponse getWorkOrderSlaList(
+            int page,
+            int size,
+            String sort,
+            String search,
+            WorkOrderStatus status,
+            WorkOrderPriority priority,
+            Long customerId,
+            Long siteId,
+            Long technicianId,
+            SlaStatus slaStatus,
+            String currentUsername) {
+        return slaService.getWorkOrderSlaList(
+                page, size, sort, search, status, priority, customerId, siteId, technicianId, slaStatus, currentUsername);
     }
 
     @Override
@@ -414,7 +468,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     private Customer findCustomer(Long customerId) {
-        return customerRepository.findById(customerId)
+        return customerRepository.findByIdWithSlaPolicy(customerId)
+                .or(() -> customerRepository.findById(customerId))
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
     }
 

@@ -29,6 +29,9 @@ public class CustomerResponse {
     private String country;
     private CustomerStatus status;
     private String notes;
+    private Long slaPolicyId;
+    private String slaPolicyName;
+    private Boolean slaPolicyActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -53,6 +56,9 @@ public class CustomerResponse {
                 .country(customer.getCountry())
                 .status(customer.getStatus())
                 .notes(customer.getNotes())
+                .slaPolicyId(customer.getSlaPolicy() != null ? customer.getSlaPolicy().getId() : null)
+                .slaPolicyName(customer.getSlaPolicy() != null ? customer.getSlaPolicy().getName() : null)
+                .slaPolicyActive(customer.getSlaPolicy() != null ? customer.getSlaPolicy().isActive() : null)
                 .createdAt(customer.getCreatedAt())
                 .updatedAt(customer.getUpdatedAt())
                 .build();

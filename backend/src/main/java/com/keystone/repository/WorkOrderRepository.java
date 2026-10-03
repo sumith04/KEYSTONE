@@ -20,15 +20,17 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     boolean existsByCustomerId(Long customerId);
 
-    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy"})
+    boolean existsBySlaPolicyId(Long slaPolicyId);
+
+    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy", "slaPolicy"})
     @Query("SELECT w FROM WorkOrder w WHERE w.id = :id")
     Optional<WorkOrder> findByIdWithRelations(@Param("id") Long id);
 
-    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy"})
+    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy", "slaPolicy"})
     @Query("SELECT w FROM WorkOrder w WHERE w.workOrderNumber = :workOrderNumber")
     Optional<WorkOrder> findByWorkOrderNumberWithRelations(@Param("workOrderNumber") String workOrderNumber);
 
-    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy"})
+    @EntityGraph(attributePaths = {"customer", "site", "assignedTechnician", "createdBy", "slaPolicy"})
     @Query("SELECT w FROM WorkOrder w WHERE " +
            "(:search IS NULL OR LOWER(w.workOrderNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(w.title) LIKE LOWER(CONCAT('%', :search, '%')) " +

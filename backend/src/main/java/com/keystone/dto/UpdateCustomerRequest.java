@@ -56,4 +56,6 @@ public class UpdateCustomerRequest {
 
     @Size(max = 2000, message = "Notes must be at most 2000 characters")
     private String notes;
+
+    private Long slaPolicyId;
 }
