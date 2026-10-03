@@ -1,6 +1,39 @@
 import axios from 'axios';
+import {
+  AuthResponse,
+  AuthUser,
+  CreateCustomerRequest,
+  CreateSiteRequest,
+  Customer,
+  CustomerPageResponse,
+  CustomerStatus,
+  ListQueryParams,
+  LoginRequest,
+  MessageResponse,
+  Site,
+  SitePageResponse,
+  SiteStatus,
+  UpdateCustomerRequest,
+  UpdateSiteRequest,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+export const AUTH_TOKEN_KEY = 'keystone_token';
+export const AUTH_USER_KEY = 'keystone_user';
+export const AUTH_UNAUTHORIZED_EVENT = 'keystone:unauthorized';
+
+const isPublicAuthRequest = (url?: string) => {
+  if (!url) {
+    return false;
+  }
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/forgot-password') ||
+    url.includes('/auth/reset-password')
+  );
+};
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +46,7 @@ export const apiClient = axios.create({
 // Request Interceptor: Attach JWT token if available
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('keystone_token');
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,9 +59,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('keystone_token');
-      localStorage.removeItem('keystone_user');
+    if (error.response && error.response.status === 401 && !isPublicAuthRequest(error.config?.url)) {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(AUTH_USER_KEY);
+      window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
     }
     return Promise.reject(error);
   }
@@ -53,4 +87,97 @@ export const fetchSystemHealth = async (): Promise<SystemHealthResponse> => {
 export const fetchUserPermissions = async (): Promise<UserPermissionsResponse> => {
   const response = await apiClient.get<UserPermissionsResponse>('/auth/permissions');
   return response.data;
+};
+
+export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+  return response.data;
+};
+
+export const logout = async (): Promise<MessageResponse> => {
+  const response = await apiClient.post<MessageResponse>('/auth/logout');
+  return response.data;
+};
+
+export const fetchCurrentUser = async (): Promise<AuthUser> => {
+  const response = await apiClient.get<AuthUser>('/auth/me');
+  return response.data;
+};
+
+const toListParams = (params: ListQueryParams = {}) => {
+  const query: Record<string, string | number> = {
+    page: params.page ?? 0,
+    size: params.size ?? 10,
+    sort: params.sort ?? 'createdAt',
+  };
+
+  if (params.search && params.search.trim()) {
+    query.search = params.search.trim();
+  }
+  if (params.status) {
+    query.status = params.status;
+  }
+  if (params.customerId != null) {
+    query.customerId = params.customerId;
+  }
+
+  return query;
+};
+
+export const getCustomers = async (params: ListQueryParams = {}): Promise<CustomerPageResponse> => {
+  const response = await apiClient.get<CustomerPageResponse>('/customers', { params: toListParams(params) });
+  return response.data;
+};
+
+export const getCustomer = async (id: number): Promise<Customer> => {
+  const response = await apiClient.get<Customer>(`/customers/${id}`);
+  return response.data;
+};
+
+export const createCustomer = async (payload: CreateCustomerRequest): Promise<Customer> => {
+  const response = await apiClient.post<Customer>('/customers', payload);
+  return response.data;
+};
+
+export const updateCustomer = async (id: number, payload: UpdateCustomerRequest): Promise<Customer> => {
+  const response = await apiClient.put<Customer>(`/customers/${id}`, payload);
+  return response.data;
+};
+
+export const updateCustomerStatus = async (id: number, status: CustomerStatus): Promise<Customer> => {
+  const response = await apiClient.patch<Customer>(`/customers/${id}/status`, null, { params: { status } });
+  return response.data;
+};
+
+export const deleteCustomer = async (id: number): Promise<void> => {
+  await apiClient.delete(`/customers/${id}`);
+};
+
+export const getSites = async (params: ListQueryParams = {}): Promise<SitePageResponse> => {
+  const response = await apiClient.get<SitePageResponse>('/sites', { params: toListParams(params) });
+  return response.data;
+};
+
+export const getSite = async (id: number): Promise<Site> => {
+  const response = await apiClient.get<Site>(`/sites/${id}`);
+  return response.data;
+};
+
+export const createSite = async (payload: CreateSiteRequest): Promise<Site> => {
+  const response = await apiClient.post<Site>('/sites', payload);
+  return response.data;
+};
+
+export const updateSite = async (id: number, payload: UpdateSiteRequest): Promise<Site> => {
+  const response = await apiClient.put<Site>(`/sites/${id}`, payload);
+  return response.data;
+};
+
+export const updateSiteStatus = async (id: number, status: SiteStatus): Promise<Site> => {
+  const response = await apiClient.patch<Site>(`/sites/${id}/status`, null, { params: { status } });
+  return response.data;
+};
+
+export const deleteSite = async (id: number): Promise<void> => {
+  await apiClient.delete(`/sites/${id}`);
 };
