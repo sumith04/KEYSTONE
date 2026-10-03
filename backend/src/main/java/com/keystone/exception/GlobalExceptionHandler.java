@@ -158,6 +158,9 @@ public class GlobalExceptionHandler {
         if (details.contains("uk_sites_site_code") || details.contains("site_code")) {
             return "A site with this site code already exists.";
         }
+        if (details.contains("uk_work_orders_number") || details.contains("work_order_number")) {
+            return "A work order with this number already exists.";
+        }
         return "A resource with the same unique value already exists.";
     }
 }

@@ -1,9 +1,11 @@
 import axios from 'axios';
 import {
+  AssignWorkOrderRequest,
   AuthResponse,
   AuthUser,
   CreateCustomerRequest,
   CreateSiteRequest,
+  CreateWorkOrderRequest,
   Customer,
   CustomerPageResponse,
   CustomerStatus,
@@ -15,6 +17,10 @@ import {
   SiteStatus,
   UpdateCustomerRequest,
   UpdateSiteRequest,
+  UpdateWorkOrderRequest,
+  WorkOrder,
+  WorkOrderListQueryParams,
+  WorkOrderPageResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -104,7 +110,7 @@ export const fetchCurrentUser = async (): Promise<AuthUser> => {
   return response.data;
 };
 
-const toListParams = (params: ListQueryParams = {}) => {
+const toListParams = (params: ListQueryParams | WorkOrderListQueryParams = {}) => {
   const query: Record<string, string | number> = {
     page: params.page ?? 0,
     size: params.size ?? 10,
@@ -119,6 +125,17 @@ const toListParams = (params: ListQueryParams = {}) => {
   }
   if (params.customerId != null) {
     query.customerId = params.customerId;
+  }
+
+  const workOrderParams = params as WorkOrderListQueryParams;
+  if (workOrderParams.priority) {
+    query.priority = workOrderParams.priority;
+  }
+  if (workOrderParams.siteId != null) {
+    query.siteId = workOrderParams.siteId;
+  }
+  if (workOrderParams.technicianId != null) {
+    query.technicianId = workOrderParams.technicianId;
   }
 
   return query;
@@ -180,4 +197,73 @@ export const updateSiteStatus = async (id: number, status: SiteStatus): Promise<
 
 export const deleteSite = async (id: number): Promise<void> => {
   await apiClient.delete(`/sites/${id}`);
+};
+
+export const getWorkOrders = async (params: WorkOrderListQueryParams = {}): Promise<WorkOrderPageResponse> => {
+  const response = await apiClient.get<WorkOrderPageResponse>('/work-orders', { params: toListParams(params) });
+  return response.data;
+};
+
+export const getWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.get<WorkOrder>(`/work-orders/${id}`);
+  return response.data;
+};
+
+export const getWorkOrderByNumber = async (workOrderNumber: string): Promise<WorkOrder> => {
+  const response = await apiClient.get<WorkOrder>(`/work-orders/number/${encodeURIComponent(workOrderNumber)}`);
+  return response.data;
+};
+
+export const createWorkOrder = async (payload: CreateWorkOrderRequest): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>('/work-orders', payload);
+  return response.data;
+};
+
+export const updateWorkOrder = async (id: number, payload: UpdateWorkOrderRequest): Promise<WorkOrder> => {
+  const response = await apiClient.put<WorkOrder>(`/work-orders/${id}`, payload);
+  return response.data;
+};
+
+export const deleteWorkOrder = async (id: number): Promise<void> => {
+  await apiClient.delete(`/work-orders/${id}`);
+};
+
+export const assignWorkOrder = async (id: number, payload: AssignWorkOrderRequest): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/assign`, payload);
+  return response.data;
+};
+
+export const startWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/start`);
+  return response.data;
+};
+
+export const holdWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/hold`);
+  return response.data;
+};
+
+export const resumeWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/resume`);
+  return response.data;
+};
+
+export const completeWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/complete`);
+  return response.data;
+};
+
+export const closeWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/close`);
+  return response.data;
+};
+
+export const cancelWorkOrder = async (id: number): Promise<WorkOrder> => {
+  const response = await apiClient.post<WorkOrder>(`/work-orders/${id}/cancel`);
+  return response.data;
+};
+
+export const getAssignableTechnicians = async (): Promise<AuthUser[]> => {
+  const response = await apiClient.get<AuthUser[]>('/work-orders/technicians');
+  return response.data;
 };

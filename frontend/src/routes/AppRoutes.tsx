@@ -13,6 +13,10 @@ import { SiteCreatePage } from '../pages/sites/SiteCreatePage';
 import { SiteDetailPage } from '../pages/sites/SiteDetailPage';
 import { SiteEditPage } from '../pages/sites/SiteEditPage';
 import { SiteListPage } from '../pages/sites/SiteListPage';
+import { WorkOrderCreatePage } from '../pages/work-orders/WorkOrderCreatePage';
+import { WorkOrderDetailsPage } from '../pages/work-orders/WorkOrderDetailsPage';
+import { WorkOrderEditPage } from '../pages/work-orders/WorkOrderEditPage';
+import { WorkOrdersPage } from '../pages/work-orders/WorkOrdersPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -45,6 +49,17 @@ export const AppRoutes: React.FC = () => {
           <Route element={<PermissionRoute requiredPermission="VIEW_SITE" />}>
             <Route path="sites" element={<SiteListPage />} />
             <Route path="sites/:id" element={<SiteDetailPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute requiredPermission="CREATE_WORK_ORDER" />}>
+            <Route path="work-orders/new" element={<WorkOrderCreatePage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="UPDATE_WORK_ORDER" />}>
+            <Route path="work-orders/:id/edit" element={<WorkOrderEditPage />} />
+          </Route>
+          <Route element={<PermissionRoute requiredPermission="VIEW_WORK_ORDER" />}>
+            <Route path="work-orders" element={<WorkOrdersPage />} />
+            <Route path="work-orders/:id" element={<WorkOrderDetailsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
