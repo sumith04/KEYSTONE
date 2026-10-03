@@ -71,7 +71,22 @@ export const CustomerEditPage: React.FC = () => {
       {error && <AlertBanner tone="error" message={error} details={validationErrors} />}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <CustomerForm
-          initialValues={customer}
+          initialValues={{
+            customerCode: customer.customerCode,
+            companyName: customer.companyName,
+            contactFirstName: customer.contactFirstName ?? undefined,
+            contactLastName: customer.contactLastName ?? undefined,
+            email: customer.email ?? undefined,
+            phone: customer.phone ?? undefined,
+            alternatePhone: customer.alternatePhone ?? undefined,
+            addressLine1: customer.addressLine1 ?? undefined,
+            addressLine2: customer.addressLine2 ?? undefined,
+            city: customer.city ?? undefined,
+            state: customer.state ?? undefined,
+            postalCode: customer.postalCode ?? undefined,
+            country: customer.country ?? undefined,
+            notes: customer.notes ?? undefined,
+          }}
           submitLabel="Save changes"
           submitting={submitting}
           onSubmit={handleSubmit}

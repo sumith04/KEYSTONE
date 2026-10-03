@@ -77,7 +77,21 @@ export const SiteEditPage: React.FC = () => {
       {error && <AlertBanner tone="error" message={error} details={validationErrors} />}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <SiteForm
-          initialValues={site}
+          initialValues={{
+            siteCode: site.siteCode,
+            siteName: site.siteName,
+            customerId: site.customerId,
+            addressLine1: site.addressLine1 ?? undefined,
+            addressLine2: site.addressLine2 ?? undefined,
+            city: site.city ?? undefined,
+            state: site.state ?? undefined,
+            postalCode: site.postalCode ?? undefined,
+            country: site.country ?? undefined,
+            contactName: site.contactName ?? undefined,
+            contactPhone: site.contactPhone ?? undefined,
+            contactEmail: site.contactEmail ?? undefined,
+            description: site.description ?? undefined,
+          }}
           customers={customers}
           submitLabel="Save changes"
           submitting={submitting}

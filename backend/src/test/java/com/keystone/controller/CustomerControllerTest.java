@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.keystone.config.CustomUserDetailsService;
 import com.keystone.config.JwtAuthenticationFilter;
 import com.keystone.config.JwtTokenProvider;
+import com.keystone.config.MethodSecurityTestConfig;
 import com.keystone.config.RolePermissionMapper;
 import com.keystone.config.TokenBlacklistService;
 import com.keystone.dto.CreateCustomerRequest;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -40,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = CustomerController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(MethodSecurityTestConfig.class)
 class CustomerControllerTest {
 
     @Autowired
@@ -51,7 +54,7 @@ class CustomerControllerTest {
     @MockBean
     private CustomerService customerService;
 
-    @MockBean
+    @MockBean(name = "authorizationService")
     private AuthorizationService authorizationService;
 
     @MockBean
