@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react';
 import { AlertBanner } from '../../components/AlertBanner';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,6 +9,7 @@ const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [userEmail, setUserEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +17,9 @@ export const LoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
+  const [success] = useState<string | null>(
+    (location.state as { success?: string } | null)?.success || null
+  );
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -69,6 +73,11 @@ export const LoginPage: React.FC = () => {
             <p className="text-sm text-slate-400 mt-1">Enter your credentials to continue.</p>
           </div>
 
+          {success && (
+            <div className="mb-4">
+              <AlertBanner tone="success" message={success} />
+            </div>
+          )}
           {apiError && <div className="mb-4"><AlertBanner tone="error" message={apiError} /></div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,6 +129,13 @@ export const LoginPage: React.FC = () => {
               {submitting ? 'Signing in...' : 'Login'}
             </button>
           </form>
+
+          <p className="mt-6 text-sm text-center text-slate-400">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-brand-300 hover:text-brand-200 font-medium">
+              Sign Up
+            </Link>
+          </p>
         </div>
       </div>
     </div>

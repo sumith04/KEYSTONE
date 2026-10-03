@@ -4,6 +4,7 @@ import { PermissionRoute } from '../components/PermissionRoute';
 import { GuestRoute, ProtectedRoute } from '../components/ProtectedRoute';
 import { MainLayout } from '../layouts/MainLayout';
 import { LoginPage } from '../pages/auth/LoginPage';
+import { SignUpPage } from '../pages/auth/SignUpPage';
 import { CustomerCreatePage } from '../pages/customers/CustomerCreatePage';
 import { CustomerDetailPage } from '../pages/customers/CustomerDetailPage';
 import { CustomerEditPage } from '../pages/customers/CustomerEditPage';
@@ -44,6 +45,7 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>

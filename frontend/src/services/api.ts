@@ -15,6 +15,7 @@ import {
   ListQueryParams,
   LoginRequest,
   MessageResponse,
+  RegisterRequest,
   Part,
   PartListQueryParams,
   PartPageResponse,
@@ -139,6 +140,11 @@ export const fetchUserPermissions = async (): Promise<UserPermissionsResponse> =
 
 export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+  return response.data;
+};
+
+export const register = async (payload: RegisterRequest): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/register', payload);
   return response.data;
 };
 

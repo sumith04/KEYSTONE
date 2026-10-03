@@ -309,6 +309,15 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
+  userEmail: string;
+  password: string;
+  phone?: string;
+  role: Role;
+}
+
 export interface AuthResponse {
   accessToken: string;
   tokenType: string;
