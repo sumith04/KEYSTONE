@@ -39,6 +39,16 @@ import {
   WorkOrderSla,
   WorkOrderSlaPageResponse,
   WorkOrderSummary,
+  WorkOrderTrend,
+  WorkOrderReport,
+  SlaReport,
+  TechnicianPerformance,
+  InventoryReport,
+  TimeReport,
+  DashboardSummary,
+  DateRangeQuery,
+  RecentWorkOrder,
+  TrendInterval,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -426,6 +436,83 @@ export const getWorkOrderSlaList = async (
 ): Promise<WorkOrderSlaPageResponse> => {
   const response = await apiClient.get<WorkOrderSlaPageResponse>('/work-orders/sla', {
     params: toListParams(params),
+  });
+  return response.data;
+};
+
+const toDateParams = (params: DateRangeQuery = {}) => {
+  const query: Record<string, string> = {};
+  if (params.from) {
+    query.from = params.from;
+  }
+  if (params.to) {
+    query.to = params.to;
+  }
+  return query;
+};
+
+export const getDashboardSummary = async (params: DateRangeQuery = {}): Promise<DashboardSummary> => {
+  const response = await apiClient.get<DashboardSummary>('/dashboard/summary', {
+    params: toDateParams(params),
+  });
+  return response.data;
+};
+
+export const getRecentDashboardWorkOrders = async (
+  params: DateRangeQuery & { limit?: number } = {}
+): Promise<RecentWorkOrder[]> => {
+  const response = await apiClient.get<RecentWorkOrder[]>('/dashboard/recent-work-orders', {
+    params: {
+      ...toDateParams(params),
+      ...(params.limit != null ? { limit: params.limit } : {}),
+    },
+  });
+  return response.data;
+};
+
+export const getWorkOrderTrend = async (
+  params: DateRangeQuery & { interval?: TrendInterval } = {}
+): Promise<WorkOrderTrend[]> => {
+  const response = await apiClient.get<WorkOrderTrend[]>('/dashboard/work-order-trend', {
+    params: {
+      ...toDateParams(params),
+      interval: params.interval ?? 'DAY',
+    },
+  });
+  return response.data;
+};
+
+export const getWorkOrderReport = async (params: DateRangeQuery = {}): Promise<WorkOrderReport> => {
+  const response = await apiClient.get<WorkOrderReport>('/reports/work-orders', {
+    params: toDateParams(params),
+  });
+  return response.data;
+};
+
+export const getSlaReport = async (params: DateRangeQuery = {}): Promise<SlaReport> => {
+  const response = await apiClient.get<SlaReport>('/reports/sla', {
+    params: toDateParams(params),
+  });
+  return response.data;
+};
+
+export const getTechnicianPerformanceReport = async (
+  params: DateRangeQuery = {}
+): Promise<TechnicianPerformance[]> => {
+  const response = await apiClient.get<TechnicianPerformance[]>('/reports/technician-performance', {
+    params: toDateParams(params),
+  });
+  return response.data;
+};
+
+export const getInventoryReport = async (): Promise<InventoryReport> => {
+  const response = await apiClient.get<InventoryReport>('/reports/inventory');
+  return response.data;
+};
+
+export const getTimeReport = async (params: DateRangeQuery = {}): Promise<TimeReport> => {
+  const response = await apiClient.get<TimeReport>('/reports/time', {
+    params: toDateParams(params),
   });
   return response.data;
 };
